@@ -22,6 +22,7 @@ from ..atmosphere import (
 )
 from ..calib.camera.gainselection import GainSelector
 from ..containers import (
+    NAN_TIME,
     ArrayEventContainer,
     CoordinateFrameType,
     EventIndexContainer,
@@ -426,6 +427,7 @@ class SimTelEventSource(EventSource):
     skip_calibration_events = Bool(True, help="Skip calibration events").tag(
         config=True
     )
+
     back_seekable = Bool(
         False,
         help=(
@@ -504,6 +506,7 @@ class SimTelEventSource(EventSource):
             self.input_url.expanduser(),
             allowed_telescopes=self.allowed_tels,
             skip_calibration=self.skip_calibration_events,
+            skip_non_triggered=self.skip_non_triggered,
             zcat=not self.back_seekable,
         )
         if self.back_seekable and self.is_stream:
@@ -567,7 +570,7 @@ class SimTelEventSource(EventSource):
 
     @property
     def is_stream(self):
-        return not isinstance(self.file_._filehandle, (BufferedReader, GzipFile))
+        return not isinstance(self.file_._file._filehandle, (BufferedReader, GzipFile))
 
     def prepare_subarray_info(self, telescope_descriptions, header):
         """
@@ -740,8 +743,8 @@ class SimTelEventSource(EventSource):
             data.meta["input_url"] = self.input_url
             data.meta["max_events"] = self.max_events
 
-            telescope_events = array_event["telescope_events"]
-            tracking_positions = array_event["tracking_positions"]
+            telescope_events = array_event.get("telescope_events", {})
+            tracking_positions = array_event.get("tracking_positions", {})
 
             photoelectron_sums = array_event.get("photoelectron_sums")
             if photoelectron_sums is not None:
@@ -873,7 +876,14 @@ class SimTelEventSource(EventSource):
         return TelescopePointingContainer(azimuth=azimuth, altitude=altitude)
 
     def _fill_trigger_info(self, array_event):
-        trigger = array_event["trigger_information"]
+        trigger = array_event.get("trigger_information")
+
+        if trigger is None:
+            return TriggerContainer(
+                tels_with_trigger=np.array([], dtype=np.int16),
+                time=NAN_TIME,
+                event_type=EventType.SUBARRAY,
+            )
 
         if array_event["type"] == "data":
             event_type = EventType.SUBARRAY

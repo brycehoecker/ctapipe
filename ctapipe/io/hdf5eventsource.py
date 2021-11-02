@@ -500,12 +500,12 @@ class HDF5EventSource(EventSource):
                     }
 
         true_impact_readers = {}
+        sim_shower_reader = None
         if self.is_simulation:
             # simulated shower wide information
-            mc_shower_reader = HDF5TableReader(self.file_).read(
+            sim_shower_reader = HDF5TableReader(self.file_).read(
                 "/simulation/event/subarray/shower",
                 SimulatedShowerContainer,
-                prefixes="true",
             )
             if "impact" in self.file_.root.simulation.event.telescope:
                 true_impact_readers = {
@@ -540,7 +540,8 @@ class HDF5EventSource(EventSource):
 
         counter = 0
         for trigger, index in events:
-            data = ArrayEventContainer(
+
+            event = ArrayEventContainer(
                 trigger=trigger,
                 count=counter,
                 index=index,
@@ -548,53 +549,58 @@ class HDF5EventSource(EventSource):
             )
             # Maybe take some other metadata, but there are still some 'unknown'
             # written out by the stage1 tool
-            data.meta["origin"] = self.file_.root._v_attrs["CTA PROCESS TYPE"]
-            data.meta["input_url"] = self.input_url
-            data.meta["max_events"] = self.max_events
+            event.meta["origin"] = self.file_.root._v_attrs["CTA PROCESS TYPE"]
+            event.meta["input_url"] = self.input_url
+            event.meta["max_events"] = self.max_events
 
-            data.trigger.tels_with_trigger = self._full_subarray.tel_mask_to_tel_ids(
-                data.trigger.tels_with_trigger
+            event.trigger.tels_with_trigger = self._full_subarray.tel_mask_to_tel_ids(
+                event.trigger.tels_with_trigger
             )
-            full_tels_with_trigger = data.trigger.tels_with_trigger.copy()
-            if self.allowed_tels:
-                data.trigger.tels_with_trigger = np.intersect1d(
-                    data.trigger.tels_with_trigger, np.array(list(self.allowed_tels))
-                )
 
             # the telescope trigger table contains triggers for all telescopes
             # that participated in the event, so we need to read a row for each
             # of them, ignoring the ones not in allowed_tels after reading
+            full_tels_with_trigger = event.trigger.tels_with_trigger.copy()
+            if self.allowed_tels:
+                event.trigger.tels_with_trigger = np.intersect1d(
+                    event.trigger.tels_with_trigger, np.array(list(self.allowed_tels))
+                )
+
             for tel_id in full_tels_with_trigger:
                 tel_index, tel_trigger = next(telescope_trigger_reader)
 
                 if self.allowed_tels and tel_id not in self.allowed_tels:
                     continue
 
-                data.trigger.tel[tel_index.tel_id] = tel_trigger
+                event.trigger.tel[tel_index.tel_id] = tel_trigger
+
+            if sim_shower_reader is not None:
+                event.simulation.shower = next(sim_shower_reader)
+
+            self._fill_array_pointing(event, array_pointing_finder)
 
             # this needs to stay *after* reading the telescope trigger table
-            if len(data.trigger.tels_with_trigger) == 0:
+            if len(event.trigger.tels_with_trigger) == 0:
+                if not self.skip_non_triggered:
+                    yield event
+                    counter += 1
                 continue
 
-            self._fill_array_pointing(data, array_pointing_finder)
-            self._fill_telescope_pointing(data, tel_pointing_finder)
+            self._fill_telescope_pointing(event, tel_pointing_finder)
 
-            if self.is_simulation:
-                data.simulation.shower = next(mc_shower_reader)
-
-            for tel_id in data.trigger.tel.keys():
+            for tel_id in event.trigger.tel.keys():
                 key = f"tel_{tel_id:03d}"
                 if self.allowed_tels and tel_id not in self.allowed_tels:
                     continue
 
                 if key in true_impact_readers:
-                    data.simulation.tel[tel_id].impact = next(true_impact_readers[key])
+                    event.simulation.tel[tel_id].impact = next(true_impact_readers[key])
 
                 if DataLevel.R1 in self.datalevels:
-                    data.r1.tel[tel_id] = next(waveform_readers[key])
+                    event.r1.tel[tel_id] = next(waveform_readers[key])
 
                 if self.has_simulated_dl1:
-                    simulated = data.simulation.tel[tel_id]
+                    simulated = event.simulation.tel[tel_id]
 
                 if DataLevel.DL1_IMAGES in self.datalevels:
                     if key not in image_readers:
@@ -604,7 +610,7 @@ class HDF5EventSource(EventSource):
                         )
                         continue
 
-                    data.dl1.tel[tel_id] = next(image_readers[key])
+                    event.dl1.tel[tel_id] = next(image_readers[key])
 
                     if self.has_simulated_dl1:
                         if key not in simulated_image_iterators:
@@ -628,7 +634,7 @@ class HDF5EventSource(EventSource):
                     # Best would probbaly be if we could directly read
                     # into the ImageParametersContainer
                     params = next(param_readers[key])
-                    data.dl1.tel[tel_id].parameters = ImageParametersContainer(
+                    event.dl1.tel[tel_id].parameters = ImageParametersContainer(
                         hillas=params[0],
                         timing=params[1],
                         leakage=params[2],
@@ -657,7 +663,7 @@ class HDF5EventSource(EventSource):
                         )
 
                 for kind, algorithms in dl2_tel_readers.items():
-                    c = getattr(data.dl2.tel[tel_id], kind)
+                    c = getattr(event.dl2.tel[tel_id], kind)
                     for algorithm, readers in algorithms.items():
                         c[algorithm] = next(readers[key])
 
@@ -667,11 +673,11 @@ class HDF5EventSource(EventSource):
                             c[algorithm].prefix = prefix
 
             for kind, readers in dl2_readers.items():
-                c = getattr(data.dl2.stereo, kind)
+                c = getattr(event.dl2.stereo, kind)
                 for algorithm, reader in readers.items():
                     c[algorithm] = next(reader)
 
-            yield data
+            yield event
             counter += 1
 
     @lazyproperty

@@ -17,7 +17,7 @@ from ..containers import (
 )
 from ..core import Provenance, ToolConfigurationError
 from ..core.component import Component, find_config_in_hierarchy, non_abstract_children
-from ..core.traits import CInt, Int, Path, Set, TraitError, Undefined
+from ..core.traits import Bool, CInt, Int, Path, Set, TraitError, Undefined
 from ..instrument import SubarrayDescription
 from .datalevels import DataLevel
 
@@ -105,6 +105,11 @@ class EventSource(Component):
             "If None, all telescopes in the input stream "
             "will be included"
         ),
+    ).tag(config=True)
+
+    skip_non_triggered = Bool(
+        default_value=True,
+        help="If False, include events that did not trigger any telescopes",
     ).tag(config=True)
 
     def __new__(cls, input_url=Undefined, config=None, parent=None, **kwargs):

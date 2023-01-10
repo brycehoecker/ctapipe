@@ -23,8 +23,10 @@ from ..atmosphere import (
 from ..calib.camera.gainselection import GainSelector
 from ..containers import (
     ArrayEventContainer,
+    ArrayEventIndexContainer,
+    ArraySimulationContainer,
+    ArrayTriggerContainer,
     CoordinateFrameType,
-    EventIndexContainer,
     EventType,
     ObservationBlockContainer,
     ObservationBlockState,
@@ -32,18 +34,16 @@ from ..containers import (
     PixelStatusContainer,
     PointingContainer,
     PointingMode,
-    R0CameraContainer,
-    R1CameraContainer,
     SchedulingBlockContainer,
     SchedulingBlockType,
-    SimulatedCameraContainer,
-    SimulatedEventContainer,
     SimulatedShowerContainer,
     SimulationConfigContainer,
     TelescopeImpactParameterContainer,
     TelescopePointingContainer,
+    TelescopeR0Container,
+    TelescopeR1Container,
+    TelescopeSimulationContainer,
     TelescopeTriggerContainer,
-    TriggerContainer,
 )
 from ..coordinates import CameraFrame, shower_impact_distance
 from ..core import Map
@@ -730,9 +730,9 @@ class SimTelEventSource(EventSource):
                 shower = None
 
             data = ArrayEventContainer(
-                simulation=SimulatedEventContainer(shower=shower),
+                simulation=ArraySimulationContainer(shower=shower),
                 pointing=self._fill_array_pointing(),
-                index=EventIndexContainer(obs_id=obs_id, event_id=event_id),
+                index=ArrayEventIndexContainer(obs_id=obs_id, event_id=event_id),
                 count=counter,
                 trigger=trigger,
             )
@@ -785,7 +785,7 @@ class SimTelEventSource(EventSource):
                             prefix="true_impact",
                         )
 
-                    data.simulation.tel[tel_id] = SimulatedCameraContainer(
+                    data.simulation.tel[tel_id] = TelescopeSimulationContainer(
                         true_image_sum=true_image_sums[
                             self.telescope_indices_original[tel_id]
                         ],
@@ -797,7 +797,7 @@ class SimTelEventSource(EventSource):
                     tracking_positions[tel_id]
                 )
 
-                data.r0.tel[tel_id] = R0CameraContainer(waveform=adc_samples)
+                data.r0.tel[tel_id] = TelescopeR0Container(waveform=adc_samples)
 
                 cam_mon = array_event["camera_monitorings"][tel_id]
                 pedestal = cam_mon["pedestal"] / cam_mon["n_ped_slices"]
@@ -818,7 +818,7 @@ class SimTelEventSource(EventSource):
                     self.calib_scale,
                     self.calib_shift,
                 )
-                data.r1.tel[tel_id] = R1CameraContainer(
+                data.r1.tel[tel_id] = TelescopeR1Container(
                     waveform=r1_waveform,
                     selected_gain_channel=selected_gain_channel,
                 )
@@ -930,7 +930,7 @@ class SimTelEventSource(EventSource):
                 n_trigger_pixels=n_trigger_pixels,
                 trigger_pixels=trigger_pixels,
             )
-        return TriggerContainer(
+        return ArrayTriggerContainer(
             event_type=event_type,
             time=central_time,
             tels_with_trigger=tels_with_trigger,

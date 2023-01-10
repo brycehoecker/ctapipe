@@ -16,7 +16,7 @@ from traitlets import Dict, Instance
 from ..containers import (
     ArrayEventContainer,
     SimulatedShowerDistribution,
-    TelEventIndexContainer,
+    TelescopeEventIndexContainer,
 )
 from ..core import Component, Container, Field, Provenance, ToolConfigurationError
 from ..core.traits import Bool, CaselessStrEnum, Float, Int, Path, Unicode
@@ -35,7 +35,7 @@ tables.parameters.NODE_CACHE_SLOTS = 3000  # fixes problem with too many dataset
 
 
 def _get_tel_index(event, tel_id):
-    return TelEventIndexContainer(
+    return TelescopeEventIndexContainer(
         obs_id=event.index.obs_id,
         event_id=event.index.event_id,
         tel_id=np.int16(tel_id),

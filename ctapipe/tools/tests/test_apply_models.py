@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from ctapipe.containers import (
-    EventIndexContainer,
+    ArrayEventIndexContainer,
     ParticleClassificationContainer,
     ReconstructedEnergyContainer,
     ReconstructedGeometryContainer,
@@ -41,7 +41,9 @@ def test_apply_energy_regressor(
     prefix = "ExtraTreesRegressor"
     table = read_table(output_path, f"/dl2/event/subarray/energy/{prefix}")
     for col in "obs_id", "event_id":
-        assert table[col].description == EventIndexContainer.fields[col].description
+        assert (
+            table[col].description == ArrayEventIndexContainer.fields[col].description
+        )
 
     for name, field in ReconstructedEnergyContainer.fields.items():
         colname = f"{prefix}_{name}"

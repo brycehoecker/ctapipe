@@ -14,23 +14,19 @@ from .core import Container, Field, Map
 __all__ = [
     "ArrayEventContainer",
     "ConcentrationContainer",
-    "DL0CameraContainer",
-    "DL0Container",
+    "TelescopeDL0Container",
     "DL1CameraCalibrationContainer",
-    "DL1CameraContainer",
-    "DL1Container",
-    "DL2Container",
-    "EventCalibrationContainer",
-    "EventCameraCalibrationContainer",
-    "EventIndexContainer",
+    "TelescopeDL1Container",
+    "ArrayDL2Container",
+    "TelescopeCalibrationContainer",
+    "ArrayEventIndexContainer",
     "EventType",
     "FlatFieldContainer",
     "HillasParametersContainer",
     "CoreParametersContainer",
     "ImageParametersContainer",
     "LeakageContainer",
-    "MonitoringCameraContainer",
-    "MonitoringContainer",
+    "TelescopeMonitoringContainer",
     "MorphologyContainer",
     "BaseHillasParametersContainer",
     "CameraHillasParametersContainer",
@@ -38,22 +34,19 @@ __all__ = [
     "ParticleClassificationContainer",
     "PedestalContainer",
     "PixelStatusContainer",
-    "R0CameraContainer",
-    "R0Container",
-    "R1CameraContainer",
-    "R1Container",
-    "ReconstructedContainer",
+    "TelescopeR0Container",
+    "TelescopeR1Container",
     "ReconstructedEnergyContainer",
     "ReconstructedGeometryContainer",
     "DispContainer",
-    "SimulatedCameraContainer",
+    "TelescopeSimulationContainer",
     "SimulatedShowerContainer",
     "SimulatedShowerDistribution",
     "SimulationConfigContainer",
-    "TelEventIndexContainer",
+    "TelescopeEventIndexContainer",
     "BaseTimingParametersContainer",
     "TimingParametersContainer",
-    "TriggerContainer",
+    "ArrayTriggerContainer",
     "WaveformCalibrationContainer",
     "StatisticsContainer",
     "IntensityStatisticsContainer",
@@ -165,7 +158,31 @@ class EventType(enum.Enum):
     UNKNOWN = 255
 
 
-class EventIndexContainer(Container):
+class TelescopeEventType(enum.Enum):
+    """Enum of EventTypes as defined in the CTA Data Model [cta_r1event]_"""
+
+    # calibrations are 0-15
+    FLATFIELD = 0
+    SINGLE_PE = 1
+    SKY_PEDESTAL = 2
+    DARK_PEDESTAL = 3
+    ELECTRONIC_PEDESTAL = 4
+    OTHER_CALIBRATION = 15
+
+    #: For mono-telescope triggers (not used in MC)
+    MUON = 16
+    HARDWARE_STEREO = 17
+
+    #: ACADA (DAQ) software trigger
+    DAQ = 24
+
+    #: Standard Physics  stereo trigger
+    SUBARRAY = 32
+
+    UNKNOWN = 255
+
+
+class ArrayEventIndexContainer(Container):
     """index columns to include in event lists, common to all data levels"""
 
     default_prefix = ""  # don't want to prefix these
@@ -173,7 +190,7 @@ class EventIndexContainer(Container):
     event_id = event_id_field()
 
 
-class TelEventIndexContainer(Container):
+class TelescopeEventIndexContainer(Container):
     """
     index columns to include in telescope-wise event lists, common to all data
     levels that have telescope-wise information
@@ -399,7 +416,7 @@ class ImageParametersContainer(Container):
     )
 
 
-class DL1CameraContainer(Container):
+class TelescopeDL1Container(Container):
     """
     Storage of output of camera calibration e.g the final calibrated
     image in intensity units and the pulse time.
@@ -439,15 +456,6 @@ class DL1CameraContainer(Container):
     )
 
 
-class DL1Container(Container):
-    """DL1 Calibrated Camera Images and associated data"""
-
-    tel = Field(
-        default_factory=partial(Map, DL1CameraContainer),
-        description="map of tel_id to DL1CameraContainer",
-    )
-
-
 class DL1CameraCalibrationContainer(Container):
     """
     Storage of DL1 calibration parameters for the current event
@@ -477,7 +485,7 @@ class DL1CameraCalibrationContainer(Container):
     )
 
 
-class R0CameraContainer(Container):
+class TelescopeR0Container(Container):
     """
     Storage of raw data from a single telescope
     """
@@ -487,18 +495,7 @@ class R0CameraContainer(Container):
     )
 
 
-class R0Container(Container):
-    """
-    Storage of a Merged Raw Data Event
-    """
-
-    tel = Field(
-        default_factory=partial(Map, R0CameraContainer),
-        description="map of tel_id to R0CameraContainer",
-    )
-
-
-class R1CameraContainer(Container):
+class TelescopeR1Container(Container):
     """
     Storage of r1 calibrated data from a single telescope
     """
@@ -519,18 +516,7 @@ class R1CameraContainer(Container):
     )
 
 
-class R1Container(Container):
-    """
-    Storage of a r1 calibrated Data Event
-    """
-
-    tel = Field(
-        default_factory=partial(Map, R1CameraContainer),
-        description="map of tel_id to R1CameraContainer",
-    )
-
-
-class DL0CameraContainer(Container):
+class TelescopeDL0Container(Container):
     """
     Storage of data volume reduced dl0 data from a single telescope
     """
@@ -551,17 +537,6 @@ class DL0CameraContainer(Container):
             "Numpy array containing the gain channel chosen for each pixel. "
             "Shape: (n_pixels)"
         ),
-    )
-
-
-class DL0Container(Container):
-    """
-    Storage of a data volume reduced Event
-    """
-
-    tel = Field(
-        default_factory=partial(Map, DL0CameraContainer),
-        description="map of tel_id to DL0CameraContainer",
     )
 
 
@@ -597,7 +572,7 @@ class SimulatedShowerContainer(Container):
     )
 
 
-class SimulatedCameraContainer(Container):
+class TelescopeSimulationContainer(Container):
     """
     True images and parameters derived from them, analgous to the `DL1CameraContainer`
     but for simulated data.
@@ -628,12 +603,11 @@ class SimulatedCameraContainer(Container):
     )
 
 
-class SimulatedEventContainer(Container):
+class ArraySimulationContainer(Container):
     shower = Field(
         default_factory=SimulatedShowerContainer,
         description="True event information",
     )
-    tel = Field(default_factory=partial(Map, SimulatedCameraContainer))
 
 
 class SimulationConfigContainer(Container):
@@ -729,19 +703,16 @@ class TelescopeTriggerContainer(Container):
         -1, description="Number of trigger groups (sectors) listed"
     )
     trigger_pixels = Field(None, description="pixels involved in the camera trigger")
+    event_type = Field(TelescopeEventType.SUBARRAY, description="Event type")
 
 
-class TriggerContainer(Container):
+class ArrayTriggerContainer(Container):
     default_prefix = ""
     time = Field(NAN_TIME, description="central average time stamp")
     tels_with_trigger = Field(
         None, description="List of telescope ids that triggered the array event"
     )
     event_type = Field(EventType.SUBARRAY, description="Event type")
-    tel = Field(
-        default_factory=partial(Map, TelescopeTriggerContainer),
-        description="telescope-wise trigger information",
-    )
 
 
 class ReconstructedGeometryContainer(Container):
@@ -860,17 +831,11 @@ class DispContainer(Container):
     is_valid = Field(False, "true if the predictions are valid")
 
 
-class ReconstructedContainer(Container):
-    """Reconstructed shower info from multiple algorithms"""
-
-    # Note: there is a reason why the hiererchy is
-    # `event.dl2.stereo.geometry[algorithm]` and not
-    # `event.dl2[algorithm].stereo.geometry` and that is because when writing
-    # the data, the former makes it easier to only write information that a
-    # particular reconstructor generates, e.g. only write the geometry in cases
-    # where energy is not yet computed. Some algorithms will compute all three,
-    # but most will compute only fill or two of these sub-Contaiers:
-
+class ArrayDL2Container(Container):
+    """Reconstructed Shower information for a given reconstruction algorithm,
+    including optionally both per-telescope mono reconstruction and per-shower
+    stereo reconstructions
+    """
     geometry = Field(
         default_factory=partial(Map, ReconstructedGeometryContainer),
         description="map of algorithm to reconstructed shower parameters",
@@ -885,9 +850,8 @@ class ReconstructedContainer(Container):
     )
 
 
-class TelescopeReconstructedContainer(ReconstructedContainer):
+class TelescopeDL2Container(ArrayDL2Container):
     """Telescope-wise reconstructed quantities"""
-
     impact = Field(
         default_factory=partial(Map, TelescopeImpactParameterContainer),
         description="map of algorithm to impact parameter info",
@@ -895,22 +859,6 @@ class TelescopeReconstructedContainer(ReconstructedContainer):
     disp = Field(
         default_factory=partial(Map, DispContainer),
         description="map of algorithm to reconstructed disp parameters",
-    )
-
-
-class DL2Container(Container):
-    """Reconstructed Shower information for a given reconstruction algorithm,
-    including optionally both per-telescope mono reconstruction and per-shower
-    stereo reconstructions
-    """
-
-    tel = Field(
-        default_factory=partial(Map, TelescopeReconstructedContainer),
-        description="map of tel_id to single-telescope reconstruction (DL2a)",
-    )
-    stereo = Field(
-        default_factory=ReconstructedContainer,
-        description="Stereo Shower reconstruction results",
     )
 
 
@@ -926,18 +874,14 @@ class TelescopePointingContainer(Container):
     altitude = Field(nan * u.rad, "Altitude", unit=u.rad)
 
 
-class PointingContainer(Container):
-    tel = Field(
-        default_factory=partial(Map, TelescopePointingContainer),
-        description="Telescope pointing positions",
-    )
-    array_azimuth = Field(nan * u.rad, "Array pointing azimuth", unit=u.rad)
-    array_altitude = Field(nan * u.rad, "Array pointing altitude", unit=u.rad)
-    array_ra = Field(nan * u.rad, "Array pointing right ascension", unit=u.rad)
-    array_dec = Field(nan * u.rad, "Array pointing declination", unit=u.rad)
+class ArrayPointingContainer(Container):
+    azimuth = Field(nan * u.rad, "Array pointing azimuth", unit=u.rad)
+    altitude = Field(nan * u.rad, "Array pointing altitude", unit=u.rad)
+    ra = Field(nan * u.rad, "Array pointing right ascension", unit=u.rad)
+    dec = Field(nan * u.rad, "Array pointing declination", unit=u.rad)
 
 
-class EventCameraCalibrationContainer(Container):
+class TelescopeCalibrationContainer(Container):
     """
     Container for the calibration coefficients for the current event and camera
     """
@@ -945,18 +889,6 @@ class EventCameraCalibrationContainer(Container):
     dl1 = Field(
         default_factory=DL1CameraCalibrationContainer,
         description="Container for DL1 calibration coefficients",
-    )
-
-
-class EventCalibrationContainer(Container):
-    """
-    Container for calibration coefficients for the current event
-    """
-
-    # create the camera container
-    tel = Field(
-        default_factory=partial(Map, EventCameraCalibrationContainer),
-        description="map of tel_id to EventCameraCalibrationContainer",
     )
 
 
@@ -979,6 +911,8 @@ class MuonRingContainer(Container):
 
 
 class MuonEfficiencyContainer(Container):
+    """Container for the result of the MuonIntensityFitter"""
+
     width = Field(nan * u.deg, "width of the muon ring in degrees")
     impact = Field(nan * u.m, "distance of muon impact position from center of mirror")
     impact_x = Field(nan * u.m, "impact parameter x position")
@@ -987,6 +921,8 @@ class MuonEfficiencyContainer(Container):
 
 
 class MuonParametersContainer(Container):
+    """Container for muon-ring-related image parameters"""
+
     containment = Field(nan, "containment of the ring inside the camera")
     completeness = Field(
         nan,
@@ -1167,7 +1103,7 @@ class WaveformCalibrationContainer(Container):
     )
 
 
-class MonitoringCameraContainer(Container):
+class TelescopeMonitoringContainer(Container):
     """
     Container for camera monitoring data
     """
@@ -1187,18 +1123,6 @@ class MonitoringCameraContainer(Container):
     calibration = Field(
         default_factory=WaveformCalibrationContainer,
         description="Container for calibration coefficients",
-    )
-
-
-class MonitoringContainer(Container):
-    """
-    Root container for monitoring data (MON)
-    """
-
-    # create the camera container
-    tel = Field(
-        default_factory=partial(Map, MonitoringCameraContainer),
-        description="map of tel_id to MonitoringCameraContainer",
     )
 
 
@@ -1228,40 +1152,86 @@ class SimulatedShowerDistribution(Container):
     )
 
 
-class ArrayEventContainer(Container):
-    """Top-level container for all event information"""
+class TelescopeEventContainer(Container):
+    """Container for single-telescope data"""
 
     index = Field(
-        default_factory=EventIndexContainer, description="event indexing information"
+        default_factory=TelescopeEventIndexContainer,
+        description="event indexing information",
     )
-    r0 = Field(default_factory=R0Container, description="Raw Data")
-    r1 = Field(default_factory=R1Container, description="R1 Calibrated Data")
-    dl0 = Field(
-        default_factory=DL0Container, description="DL0 Data Volume Reduced Data"
-    )
-    dl1 = Field(default_factory=DL1Container, description="DL1 Calibrated image")
-    dl2 = Field(default_factory=DL2Container, description="DL2 reconstruction info")
+
     simulation = Field(
-        None, description="Simulated Event Information", type=SimulatedEventContainer
+        None,
+        description="Simulated Event Information",
+        type=TelescopeSimulationContainer,
+    )
+
+    r0 = Field(default_factory=TelescopeR0Container, description="Raw Data")
+    r1 = Field(default_factory=TelescopeR1Container, description="R1 Calibrated Data")
+    dl0 = Field(
+        default_factory=TelescopeDL0Container,
+        description="DL0 Data Volume Reduced Data",
+    )
+    dl1 = Field(
+        default_factory=TelescopeDL1Container, description="DL1 images and parameters"
+    )
+    dl2 = Field(
+        default_factory=TelescopeDL2Container,
+        description="DL2 reconstructed event properties",
     )
     trigger = Field(
-        default_factory=TriggerContainer, description="central trigger information"
+        default_factory=TelescopeTriggerContainer,
+        description="central trigger information",
     )
     count = Field(0, description="number of events processed")
     pointing = Field(
-        default_factory=PointingContainer,
+        default_factory=TelescopePointingContainer,
         description="Array and telescope pointing positions",
     )
     calibration = Field(
-        default_factory=EventCalibrationContainer,
+        default_factory=TelescopeCalibrationContainer,
         description="Container for calibration coefficients for the current event",
     )
     mon = Field(
-        default_factory=MonitoringContainer,
+        default_factory=TelescopeMonitoringContainer,
         description="container for event-wise monitoring data (MON)",
     )
     muon = Field(
         default_factory=MuonContainer, description="Container for muon analysis results"
+    )
+
+
+class ArrayEventContainer(Container):
+    """Top-level container for all event information"""
+
+    count = Field(0, description="number of events processed")
+
+    index = Field(
+        default_factory=ArrayEventIndexContainer,
+        description="event indexing information",
+    )
+
+    simulation = Field(
+        None, description="Simulated Event Information", type=ArraySimulationContainer
+    )
+
+    trigger = Field(
+        default_factory=ArrayTriggerContainer, description="central trigger information"
+    )
+
+    dl2 = Field(
+        default_factory=ArrayDL2Container,
+        description="DL2 reconstructed event properties",
+    )
+
+    pointing = Field(
+        default_factory=ArrayPointingContainer,
+        description="Array and telescope pointing positions",
+    )
+
+    tel = Field(
+        default_factory=partial(Map, TelescopeEventContainer),
+        description="Telescope Events",
     )
 
 

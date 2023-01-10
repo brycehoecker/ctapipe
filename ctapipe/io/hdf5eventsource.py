@@ -13,11 +13,12 @@ from ctapipe.instrument.optics import FocalLengthKind
 
 from ..containers import (
     ArrayEventContainer,
+    ArrayEventIndexContainer,
+    ArraySimulationContainer,
+    ArrayTriggerContainer,
     CameraHillasParametersContainer,
     CameraTimingParametersContainer,
     ConcentrationContainer,
-    DL1CameraContainer,
-    EventIndexContainer,
     HillasParametersContainer,
     ImageParametersContainer,
     IntensityStatisticsContainer,
@@ -30,18 +31,17 @@ from ..containers import (
     ObservationBlockContainer,
     ParticleClassificationContainer,
     PeakTimeStatisticsContainer,
-    R1CameraContainer,
     ReconstructedEnergyContainer,
     ReconstructedGeometryContainer,
     SchedulingBlockContainer,
-    SimulatedEventContainer,
     SimulatedShowerContainer,
     SimulationConfigContainer,
+    TelescopeDL1Container,
+    TelescopeEventIndexContainer,
     TelescopeImpactParameterContainer,
+    TelescopeR1Container,
     TelescopeTriggerContainer,
-    TelEventIndexContainer,
     TimingParametersContainer,
-    TriggerContainer,
 )
 from ..core import Container, Field
 from ..core.traits import UseEnum
@@ -395,7 +395,7 @@ class HDF5EventSource(EventSource):
         if DataLevel.R1 in self.datalevels:
             waveform_readers = {
                 table.name: self.reader.read(
-                    f"/r1/event/telescope/{table.name}", R1CameraContainer
+                    f"/r1/event/telescope/{table.name}", TelescopeR1Container
                 )
                 for table in self.file_.root.r1.event.telescope
             }
@@ -410,7 +410,7 @@ class HDF5EventSource(EventSource):
             image_readers = {
                 table.name: self.reader.read(
                     f"/dl1/event/telescope/images/{table.name}",
-                    DL1CameraContainer,
+                    TelescopeDL1Container,
                     ignore_columns=ignore_columns,
                 )
                 for table in self.file_.root.dl1.event.telescope.images
@@ -557,12 +557,12 @@ class HDF5EventSource(EventSource):
         # Setup iterators for the array events
         events = HDF5TableReader(self.file_).read(
             "/dl1/event/subarray/trigger",
-            [TriggerContainer, EventIndexContainer],
+            [ArrayTriggerContainer, ArrayEventIndexContainer],
             ignore_columns={"tel"},
         )
         telescope_trigger_reader = HDF5TableReader(self.file_).read(
             "/dl1/event/telescope/trigger",
-            [TelEventIndexContainer, TelescopeTriggerContainer],
+            [TelescopeEventIndexContainer, TelescopeTriggerContainer],
             ignore_columns={"trigger_pixels"},
         )
 
@@ -581,7 +581,7 @@ class HDF5EventSource(EventSource):
                 trigger=trigger,
                 count=counter,
                 index=index,
-                simulation=SimulatedEventContainer() if self.is_simulation else None,
+                simulation=ArraySimulationContainer() if self.is_simulation else None,
             )
             # Maybe take some other metadata, but there are still some 'unknown'
             # written out by the stage1 tool

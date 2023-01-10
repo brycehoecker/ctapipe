@@ -5,11 +5,11 @@ from astropy.table import Table
 from numpy.testing import assert_allclose, assert_array_equal
 
 from ctapipe.containers import (
+    ArrayDL2Container,
     ArrayEventContainer,
     HillasParametersContainer,
     ImageParametersContainer,
     ParticleClassificationContainer,
-    ReconstructedContainer,
     ReconstructedEnergyContainer,
     ReconstructedGeometryContainer,
 )
@@ -163,7 +163,7 @@ def test_mean_prediction_single_event(weights):
             )
         )
 
-    event.dl2.tel[25] = ReconstructedContainer(
+    event.dl2.tel[25] = ArrayDL2Container(
         energy={
             "dummy": ReconstructedEnergyContainer(energy=10 * u.GeV, is_valid=True)
         },
@@ -176,7 +176,7 @@ def test_mean_prediction_single_event(weights):
             )
         },
     )
-    event.dl2.tel[125] = ReconstructedContainer(
+    event.dl2.tel[125] = ArrayDL2Container(
         energy={
             "dummy": ReconstructedEnergyContainer(energy=20 * u.GeV, is_valid=True)
         },
@@ -189,7 +189,7 @@ def test_mean_prediction_single_event(weights):
             )
         },
     )
-    event.dl2.tel[130] = ReconstructedContainer(
+    event.dl2.tel[130] = ArrayDL2Container(
         energy={
             "dummy": ReconstructedEnergyContainer(energy=0.04 * u.TeV, is_valid=True)
         },

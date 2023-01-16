@@ -115,6 +115,14 @@ jobs:
       - uses: codecov/codecov-action@v3
         if: contains(matrix.extra-args, 'codecov')
 
+      # check code quality and coverage with SonarScanner
+      - uses: SonarSource/sonarqube-scan-action@master
+        if: contains(matrix.extra-args, 'codecov')
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+
   docs:
     runs-on: ubuntu-latest
     steps:
@@ -156,3 +164,4 @@ jobs:
         with:
           name: docs
           path: docs/_build/html
+

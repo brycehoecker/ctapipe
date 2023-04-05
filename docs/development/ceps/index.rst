@@ -14,16 +14,15 @@ can be found on Github as `pull requests with the "CEP" label`_ .
 Accepted CEPs
 =============
 .. toctree::
-   :maxdepth: 1   
+   :maxdepth: 1
    :glob:
 
    accepted/*
 
 Proposed CEPs
 =============
-.. 
-   toctree::
-   :maxdepth: 1   
+.. toctree::
+   :maxdepth: 1
    :glob:
 
    proposed/*

@@ -2,6 +2,7 @@ import logging
 import os
 from pathlib import Path
 from urllib.parse import urlparse
+import hashlib
 
 import requests
 from tqdm.auto import tqdm
@@ -74,8 +75,9 @@ def get_cache_path(url, cache_name="ctapipe", env_override="CTAPIPE_CACHE"):
 
     url = urlparse(url)
 
-    path = os.path.join(url.netloc.rstrip("/"), url.path.lstrip("/"))
-    path = base / path
+    # domains may be invalid filenames (at least on some systems), so we use the md5hash
+    dir_name = hashlib.md5(url.netloc.rstrip("/").encode("utf-8")).hexdigest()
+    path = base / dir_name / url.path.lstrip("/")
     return path
 
 

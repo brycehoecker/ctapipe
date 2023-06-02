@@ -28,7 +28,7 @@ def test_datasets_in_custom_path(tmpdir_factory):
 
     tmpdir1 = tmpdir_factory.mktemp("datasets1")
     tmpdir2 = tmpdir_factory.mktemp("datasets2")
-    os.environ["CTAPIPE_SVC_PATH"] = ":".join([str(tmpdir1), str(tmpdir2)])
+    os.environ["CTAPIPE_SVC_PATH"] = os.pathsep.join([str(tmpdir1), str(tmpdir2)])
 
     # create a dummy dataset to search for:
 

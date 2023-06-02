@@ -1,4 +1,5 @@
 import os
+import sys
 import pathlib
 import tempfile
 from abc import ABCMeta, abstractmethod
@@ -18,6 +19,9 @@ from ctapipe.core.traits import (
 )
 from ctapipe.image import ImageExtractor
 from ctapipe.utils.datasets import DEFAULT_URL, get_dataset_path
+
+
+WIN = sys.platform == "win32"
 
 
 def test_path_allow_none_false():
@@ -96,9 +100,14 @@ def test_bytes():
         p = Path(exists=False)
 
     c1 = C1()
-    c1.p = b"/home/foo"
-    assert c1.p == pathlib.Path("/home/foo")
 
+    if WIN:
+        c1.p = b"C:\\Users\\foo"
+        assert c1.p == pathlib.Path("C:\\Users\\foo")
+    else:
+        c1.p = b"/home/foo"
+        assert c1.p == pathlib.Path("/home/foo")
+    
 
 def test_path_directory_ok():
     """test path is a directory"""
@@ -157,9 +166,13 @@ def test_path_url():
     assert c.thepath == (pathlib.Path() / "foo.hdf5").absolute()
 
     # test absolute
-    c.thepath = "file:///foo.hdf5"
-    assert c.thepath == pathlib.Path("/foo.hdf5")
-
+    if sys.platform != "win32":
+        c.thepath = "file:///foo.hdf5"
+        assert c.thepath == pathlib.Path("/foo.hdf5")
+    else:
+        c.thepath = "file://C:\\foo.hdf5"
+        assert c.thepath == pathlib.Path("C:\\foo.hdf5")
+        
     # test http downloading
     c.thepath = DEFAULT_URL + "optics.ecsv.txt"
     assert c.thepath.name == "optics.ecsv.txt"
@@ -169,7 +182,7 @@ def test_path_url():
     assert c.thepath == get_dataset_path("optics.ecsv.txt")
 
 
-@mock.patch.dict(os.environ, {"ANALYSIS_DIR": "/home/foo"})
+@mock.patch.dict(os.environ, {"ANALYSIS_DIR": "C:\\foo" if WIN else "/home/foo"})
 def test_path_envvars():
     class C(Component):
         thepath = Path()
@@ -177,7 +190,10 @@ def test_path_envvars():
     c = C()
     c.thepath = "$ANALYSIS_DIR/test.txt"
 
-    assert str(c.thepath) == "/home/foo/test.txt"
+    if WIN:
+        assert str(c.thepath) == "C:\\foo\\test.txt"
+    else:
+        assert str(c.thepath) == "/home/foo/test.txt"
 
 
 def test_enum_trait_default_is_right():

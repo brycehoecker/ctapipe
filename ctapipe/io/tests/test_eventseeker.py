@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 
 from ctapipe.io import SimTelEventSource
@@ -82,7 +84,11 @@ def test_eventseeker_simtel():
         assert event.count == 2
         event = seeker.get_event_index(4)
         assert event.count == 4
-        with pytest.raises(IOError):
-            seeker.get_event_index(1)
+
+        # zcat not available on windows, so we are always back-seekable
+        if sys.platform != "win32":
+            with pytest.raises(IOError):
+                seeker.get_event_index(1)
+
         event = seeker.get_event_index(5)
         assert event.count == 5

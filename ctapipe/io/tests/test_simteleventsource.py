@@ -1,6 +1,7 @@
 """ tests of SimTelEventSource """
 # pylint: disable=import-outside-toplevel
 import copy
+import sys
 from itertools import zip_longest
 from pathlib import Path
 
@@ -135,7 +136,9 @@ def test_gamma_file_prod2():
             focal_length_choice="EQUIVALENT",
         ) as reader:
             assert reader.is_compatible(dataset)
-            assert reader.is_stream  # using gzip subprocess makes it a stream
+
+            if sys.platform != "win32":
+                assert reader.is_stream  # using gzip subprocess makes it a stream
 
             for event in reader:
                 if event.count == 0:

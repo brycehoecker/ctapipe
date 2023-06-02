@@ -1,6 +1,6 @@
 import os
-import sys
 import pathlib
+import sys
 import tempfile
 from abc import ABCMeta, abstractmethod
 from unittest import mock
@@ -19,7 +19,6 @@ from ctapipe.core.traits import (
 )
 from ctapipe.image import ImageExtractor
 from ctapipe.utils.datasets import DEFAULT_URL, get_dataset_path
-
 
 WIN = sys.platform == "win32"
 
@@ -107,7 +106,7 @@ def test_bytes():
     else:
         c1.p = b"/home/foo"
         assert c1.p == pathlib.Path("/home/foo")
-    
+
 
 def test_path_directory_ok():
     """test path is a directory"""
@@ -172,7 +171,7 @@ def test_path_url():
     else:
         c.thepath = "file://C:\\foo.hdf5"
         assert c.thepath == pathlib.Path("C:\\foo.hdf5")
-        
+
     # test http downloading
     c.thepath = DEFAULT_URL + "optics.ecsv.txt"
     assert c.thepath.name == "optics.ecsv.txt"

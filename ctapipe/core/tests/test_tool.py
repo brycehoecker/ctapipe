@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import tempfile
 from pathlib import Path
 
 import pytest

@@ -7,7 +7,13 @@ def test_drop_columns():
     from ctapipe.utils.arrays import recarray_drop_columns
 
     array = np.empty(
-        1000, dtype=[("x", np.float64), ("N", np.int64), ("valid", bool), ("tel_id", np.uint16)]
+        1000,
+        dtype=[
+            ("x", np.float64),
+            ("N", np.int64),
+            ("valid", bool),
+            ("tel_id", np.uint16),
+        ],
     )
     assert array.dtype.itemsize == 19
 

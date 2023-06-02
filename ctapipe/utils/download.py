@@ -1,8 +1,8 @@
+import hashlib
 import logging
 import os
 from pathlib import Path
 from urllib.parse import urlparse
-import hashlib
 
 import requests
 from tqdm.auto import tqdm

@@ -10,6 +10,7 @@ class MainTool(Application):
 
     name = "ctapipe"
     version = __version__
+    description = __doc__
 
     subcommands = {
         "process": (

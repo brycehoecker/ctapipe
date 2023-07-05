@@ -46,6 +46,7 @@ class InfoTool(Tool):
     """
 
     name = "ctapipe-info"
+    description = __doc__
 
     tools = Bool(False, help="Print available command line tools").tag(config=True)
     dependencies = Bool(False, help="Print available versions of dependencies").tag(
@@ -82,7 +83,7 @@ class InfoTool(Tool):
             {"InfoTool": {"datamodel": True}},
             "Show data model version and changelog",
         ),
-        "event_sources": (
+        "event-sources": (
             {"InfoTool": {"event_sources": True}},
             "Show available EventSource implementations",
         ),
@@ -93,23 +94,7 @@ class InfoTool(Tool):
         "all": ({"InfoTool": {"all": True}}, "Show everything"),
     }
 
-    def run(self):
-        if not any(
-            (
-                self.tools,
-                self.dependencies,
-                self.resources,
-                self.system,
-                self.plugins,
-                self.datamodel,
-                self.event_sources,
-                self.reconstructors,
-                self.all,
-            )
-        ):
-            self.print_help()
-            self.exit(1)
-
+    def start(self):
         info(
             tools=self.tools,
             dependencies=self.dependencies,
@@ -121,6 +106,9 @@ class InfoTool(Tool):
             reconstructors=self.reconstructors,
             show_all=self.all,
         )
+
+    def write_provenance(self):
+        """no provenance for this tool"""
 
 
 def info(

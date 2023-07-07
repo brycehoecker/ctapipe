@@ -23,6 +23,7 @@ dependencies:
   - numpy>=1.22
   - numpydoc
   - pandas
+  - pypandoc
   - pre-commit
   - psutil
   - pytables

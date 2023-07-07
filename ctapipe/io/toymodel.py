@@ -100,13 +100,10 @@ class ToyEventSource(TelescopeComponent, EventSource):
 
         event = SubarrayEventContainer(
             index=ArrayEventIndexContainer(obs_id=1, event_id=self.event_id),
-            trigger=None,
-            r0=None,
             dl0=None,
             dl2=None,
             simulation=None,
             count=self.event_id,
-            calibration=None,
         )
 
         for tel_id, telescope in self.subarray.tel.items():
@@ -150,6 +147,6 @@ class ToyEventSource(TelescopeComponent, EventSource):
             )
             image, _, _ = model.generate_image(cam, intensity)
 
-            event.dl1.tel[tel_id] = DL1TelescopeContainer(image=image)
+            event.tel[tel_id].dl1 = DL1TelescopeContainer(image=image)
 
         return event

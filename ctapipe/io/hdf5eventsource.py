@@ -572,12 +572,12 @@ class HDF5EventSource(EventSource):
         )
 
         array_pointing_finder = IndexFinder(
-            self.file_.root.dl1.monitoring.subarray.pointing.col("time")
+            self.file_.root.dl0.monitoring.subarray.pointing.col("time")
         )
 
         tel_pointing_finder = {
             table.name: IndexFinder(table.col("time"))
-            for table in self.file_.root.dl1.monitoring.telescope.pointing
+            for table in self.file_.root.dl0.monitoring.telescope.pointing
         }
 
         counter = 0
@@ -716,12 +716,12 @@ class HDF5EventSource(EventSource):
 
     @lazyproperty
     def _subarray_pointing_attrs(self):
-        table = self.file_.root.dl1.monitoring.subarray.pointing
+        table = self.file_.root.dl0.monitoring.subarray.pointing
         return get_column_attrs(table)
 
     @lru_cache(maxsize=1000)
     def _telescope_pointing_attrs(self, tel_id):
-        pointing_group = self.file_.root.dl1.monitoring.telescope.pointing
+        pointing_group = self.file_.root.dl0.monitoring.telescope.pointing
         return get_column_attrs(pointing_group[f"tel_{tel_id:03d}"])
 
     def _fill_array_pointing(self, event, array_pointing_finder):
@@ -731,7 +731,7 @@ class HDF5EventSource(EventSource):
         # Only unique pointings are stored, so reader.read() wont work as easily
         # Thats why we match the pointings based on trigger time
         closest_time_index = array_pointing_finder.closest(event.dl0.trigger.time.mjd)
-        table = self.file_.root.dl1.monitoring.subarray.pointing
+        table = self.file_.root.dl0.monitoring.subarray.pointing
         array_pointing = table[closest_time_index]
 
         event.pointing.azimuth = u.Quantity(
@@ -756,7 +756,7 @@ class HDF5EventSource(EventSource):
         Fill the telescope pointing information of a given event
         """
         # Same comments as to _fill_array_pointing apply
-        pointing_group = self.file_.root.dl1.monitoring.telescope.pointing
+        pointing_group = self.file_.root.dl0.monitoring.telescope.pointing
         key = f"tel_{tel_id:03d}"
 
         tel_pointing_table = pointing_group[key]

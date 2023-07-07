@@ -341,7 +341,6 @@ class DataWriter(Component):
             self._write_dl2_telescope(tel_event)
 
         if self.write_muon_parameters:
-            self._write_muon_telescope_events(event)
             self._write_muon_telescope(tel_event)
 
     def _write_r0_telescope(self, tel_event: TelescopeEventContainer):
@@ -643,13 +642,15 @@ class DataWriter(Component):
         self._writer = writer
         self.log.debug("Writer initialized: %s", self._writer)
 
-    def _write_subarray_pointing(self, event: ArrayEventContainer):
+    def _write_subarray_pointing(self, event: SubarrayEventContainer):
         """store subarray pointing info in a monitoring table"""
         pnt = event.pointing
         current_pointing = (pnt.azimuth, pnt.altitude)
         if current_pointing != self._last_pointing:
             pnt.prefix = ""
-            self._writer.write("dl1/monitoring/subarray/pointing", [event.dl0.trigger, pnt])
+            self._writer.write(
+                "dl1/monitoring/subarray/pointing", [event.dl0.trigger, pnt]
+            )
             self._last_pointing = current_pointing
 
     def _write_scheduling_and_observation_blocks(self):

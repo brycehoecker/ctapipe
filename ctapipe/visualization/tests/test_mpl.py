@@ -157,11 +157,11 @@ def test_camera_display_multiple(prod5_lst_cam, tmp_path):
 def test_array_display(prod5_mst_nectarcam):
     """check that we can do basic array display functionality"""
     from ctapipe.containers import (
-        ArrayEventContainer,
         CoreParametersContainer,
         DL1CameraContainer,
         DL1Container,
         ImageParametersContainer,
+        SubarrayEventContainer,
     )
     from ctapipe.image import timing_parameters
     from ctapipe.visualization.mpl_array import ArrayDisplay
@@ -179,7 +179,7 @@ def test_array_display(prod5_mst_nectarcam):
 
     # Create a fake event containing telescope-wise information about
     # the image directions projected on the ground
-    event = ArrayEventContainer()
+    event = SubarrayEventContainer()
     event.dl1 = DL1Container()
     event.dl1.tel = {1: DL1CameraContainer(), 2: DL1CameraContainer()}
     event.dl1.tel[1].parameters = ImageParametersContainer()

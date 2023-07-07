@@ -17,7 +17,7 @@ from numpy.lib.recfunctions import structured_to_unstructured
 
 from ctapipe.coordinates import MissingFrameAttributeWarning, TelescopeFrame
 
-from ..containers import ArrayEventContainer
+from ..containers import SubarrayEventContainer
 
 LOG = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ def table_to_X(table: Table, features: List[str], log=LOG):
 
 
 def collect_features(
-    event: ArrayEventContainer, tel_id: int, subarray_table=None
+    event: SubarrayEventContainer, tel_id: int, subarray_table=None
 ) -> Table:
     """Loop over all containers with features.
 

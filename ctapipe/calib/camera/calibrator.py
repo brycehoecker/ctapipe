@@ -9,7 +9,7 @@ import astropy.units as u
 import numpy as np
 from numba import float32, float64, guvectorize, int64
 
-from ctapipe.containers import TelescopeDL1Container, TelescopeEventContainer
+from ctapipe.containers import DL1TelescopeContainer, TelescopeEventContainer
 from ctapipe.core import TelescopeComponent
 from ctapipe.core.traits import (
     BoolTelescopeParameter,
@@ -229,7 +229,7 @@ class CameraCalibrator(TelescopeComponent):
             #   - Read into dl1 container directly?
             #   - Don't do anything if dl1 container already filled
             #   - Update on SST review decision
-            dl1 = TelescopeDL1Container(
+            dl1 = DL1TelescopeContainer(
                 image=waveforms[..., 0].astype(np.float32),
                 peak_time=np.zeros(n_pixels, dtype=np.float32),
                 is_valid=True,

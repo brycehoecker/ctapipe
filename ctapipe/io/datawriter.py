@@ -14,9 +14,9 @@ from astropy import units as u
 from traitlets import Dict, Instance
 
 from ..containers import (
-    ArrayEventContainer,
     SimulatedShowerDistribution,
-    TelescopeEventIndexContainer,
+    SubarrayEventContainer,
+    TelescopeEventContainer,
 )
 from ..core import Component, Container, Field, Provenance, ToolConfigurationError
 from ..core.traits import Bool, CaselessStrEnum, Float, Int, Path, Unicode
@@ -32,14 +32,6 @@ from .tableio import FixedPointColumnTransform, TelListToMaskTransform
 __all__ = ["DataWriter", "DATA_MODEL_VERSION", "write_reference_metadata_headers"]
 
 tables.parameters.NODE_CACHE_SLOTS = 3000  # fixes problem with too many datasets
-
-
-def _get_tel_index(event, tel_id):
-    return TelescopeEventIndexContainer(
-        obs_id=event.index.obs_id,
-        event_id=event.index.event_id,
-        tel_id=np.int16(tel_id),
-    )
 
 
 # define the version of the data model written here. This should be updated
@@ -293,46 +285,194 @@ class DataWriter(Component):
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.finish()
 
-    def __call__(self, event: ArrayEventContainer):
+    def __call__(self, event: SubarrayEventContainer):
         """
         Write a single event to the output file.
         """
         self._at_least_one_event = True
         self.log.debug("WRITING EVENT %s", event.index)
 
-        self._write_subarray_pointing(event)
-        self._write_trigger(event)
+        self._write_simulation_subarray(event)
+        self._write_dl0_subarray(event)
+        self._write_dl2_subarray(event)
 
+        for tel_id, tel_event in event.tel.items():
+            telescope = self._subarray.tel[tel_id]
+            self.log.debug("WRITING TELESCOPE %s: %s", tel_id, telescope)
+            self._write_telescope_event(tel_event)
+
+    def _write_simulation_subarray(self, event):
         if event.simulation is not None and event.simulation.shower is not None:
             self._writer.write(
                 table_name="simulation/event/subarray/shower",
                 containers=[event.index, event.simulation.shower],
             )
 
-            for tel_id, sim in event.simulation.tel.items():
-                table_name = self.table_name(tel_id)
-                tel_index = _get_tel_index(event, tel_id)
-                self._writer.write(
-                    f"simulation/event/telescope/impact/{table_name}",
-                    [tel_index, sim.impact],
-                )
+    def _write_dl0_subarray(self, event):
+        self._writer.write(
+            table_name="dl0/event/subarray/trigger",
+            containers=[event.index, event.dl0.trigger],
+        )
 
-        if self.write_waveforms:
-            self._write_r1_telescope_events(event)
+    def _write_telescope_event(self, tel_event):
+        table_name = self.table_name(tel_event.index.tel_id)
+        self._writer.write(
+            f"simulation/event/telescope/impact/{table_name}",
+            [tel_event.index, tel_event.simulation.impact],
+        )
+
+        if tel_event.simulation is not None:
+            self._write_simulation_telescope(tel_event)
 
         if self.write_raw_waveforms:
-            self._write_r0_telescope_events(event)
+            self._write_r0_telescope(tel_event)
 
-        # write telescope event data
-        self._write_dl1_telescope_events(event)
+        if self.write_waveforms:
+            self._write_r1_telescope(tel_event)
 
-        # write DL2 info if requested
+        # always write dl0, contains needed trigger info etc.
+        self._write_dl0_telescope(tel_event)
+        self._write_pointing_telescope(tel_event)
+
+        if self.write_images or self.write_parameters:
+            self._write_dl1_telescope(tel_event)
+
         if self.write_showers:
-            self._write_dl2_telescope_events(event)
-            self._write_dl2_stereo_event(event)
+            self._write_dl2_telescope(tel_event)
 
         if self.write_muon_parameters:
             self._write_muon_telescope_events(event)
+            self._write_muon_telescope(tel_event)
+
+    def _write_r0_telescope(self, tel_event: TelescopeEventContainer):
+        table_name = self.table_name(tel_event.index.tel_id)
+        tel_event.r0.prefix = ""
+        self._writer.write(
+            f"r0/event/telescope/{table_name}",
+            [tel_event.index, tel_event.r0],
+        )
+
+    def _write_r1_telescope(self, tel_event: TelescopeEventContainer):
+        table_name = self.table_name(tel_event.index.tel_id)
+        tel_event.r1.prefix = ""
+        self._writer.write(
+            f"r1/event/telescope/{table_name}",
+            [tel_event.index, tel_event.r1],
+        )
+
+    def _write_dl0_telescope(self, tel_event: TelescopeEventContainer):
+        self._writer.write(
+            "dl0/event/telescope/trigger",
+            [tel_event.index, tel_event.dl0.trigger],
+        )
+
+    def _write_pointing_telescope(self, tel_event: TelescopeEventContainer):
+        tel_index = tel_event.index
+        tel_id = tel_index.tel_id
+        current_pointing = (tel_event.pointing.azimuth, tel_event.pointing.altitude)
+        if current_pointing != self._last_pointing_tel[tel_id]:
+            table_name = self.table_name(tel_id)
+            tel_event.pointing.prefix = ""
+            self._writer.write(
+                f"dl1/monitoring/telescope/pointing/{table_name}",
+                [tel_event.dl0.trigger, tel_event.pointing],
+            )
+            self._last_pointing_tel[tel_id] = current_pointing
+
+    def _write_dl1_telescope(self, tel_event: TelescopeEventContainer):
+        tel_index = tel_event.index
+        tel_id = tel_index.tel_id
+        table_name = self.table_name(tel_id)
+        tel_event.dl1.prefix = ""  # don't want a prefix for this container
+
+        if self.write_parameters:
+            self._writer.write(
+                table_name=f"dl1/event/telescope/parameters/{table_name}",
+                containers=[tel_index, *tel_event.dl1.parameters.values()],
+            )
+
+        if self.write_images:
+            if tel_event.dl1.image is None:
+                raise ValueError(
+                    "DataWriter.write_images is True but event does not contain image"
+                )
+
+            self._writer.write(
+                table_name=f"dl1/event/telescope/images/{table_name}",
+                containers=[tel_index, tel_event.dl1],
+            )
+
+    def _write_simulation_telescope(self, tel_event: TelescopeEventContainer):
+        tel_index = tel_event.index
+        tel_id = tel_index.tel_id
+        table_name = self.table_name(tel_id)
+
+        # always write this, so that at least the sum is included
+        self._writer.write(
+            f"simulation/event/telescope/images/{table_name}",
+            [tel_index, tel_event.simulation],
+        )
+
+        has_sim_image = (
+            tel_event.simulation is not None
+            and tel_event.simulation.true_image is not None
+        )
+        if self.write_parameters and has_sim_image:
+            true_parameters = tel_event.simulation.true_parameters
+            # only write the available containers, no peak time related
+            # features for true image available.
+            self._writer.write(
+                f"simulation/event/telescope/parameters/{table_name}",
+                [
+                    tel_index,
+                    true_parameters.hillas,
+                    true_parameters.leakage,
+                    true_parameters.concentration,
+                    true_parameters.morphology,
+                    true_parameters.intensity_statistics,
+                ],
+            )
+
+    def _write_muon_telescope(self, tel_event: TelescopeEventContainer):
+        table_name = self.table_name(tel_event.index.tel_id)
+        muon = tel_event.muon
+        self._writer.write(
+            f"dl1/event/telescope/muon/{table_name}",
+            [tel_event.index, muon.ring, muon.parameters, muon.efficiency],
+        )
+
+    def _write_dl2_telescope(self, tel_event: TelescopeEventContainer):
+        """
+        write per-telescope DL2 shower information.
+
+        Currently this writes to a single table per type of shower
+        reconstruction and per algorithm, with all telescopes combined.
+        """
+
+        table_name = self.table_name(tel_event.index.tel_id)
+
+        for container_name, algorithm_map in tel_event.dl2.items():
+            for algorithm, container in algorithm_map.items():
+                name = f"dl2/event/telescope/{container_name}/{algorithm}/{table_name}"
+
+                self._writer.write(
+                    table_name=name, containers=[tel_event.index, container]
+                )
+
+    def _write_dl2_subarray(self, event: SubarrayEventContainer):
+        """
+        write per-telescope DL2 shower information to e.g.
+        `/dl2/event/stereo/{geometry,energy,classification}/<algorithm_name>`
+        """
+        for container_name, algorithm_map in event.dl2.items():
+            for algorithm, container in algorithm_map.items():
+                # note this will only write info if the particular algorithm
+                # generated it (otherwise the algorithm map is empty, and no
+                # data will be written)
+                self._writer.write(
+                    table_name=f"dl2/event/subarray/{container_name}/{algorithm}",
+                    containers=[event.index, container],
+                )
 
     def finish(self):
         """called after all events are done"""
@@ -431,7 +571,7 @@ class DataWriter(Component):
         tr_tel_list_to_mask = TelListToMaskTransform(self._subarray)
 
         writer.add_column_transform(
-            table_name="dl1/event/subarray/trigger",
+            table_name="dl0/event/subarray/trigger",
             col_name="tels_with_trigger",
             transform=tr_tel_list_to_mask,
         )
@@ -442,7 +582,7 @@ class DataWriter(Component):
         writer.exclude("dl1/monitoring/subarray/pointing", "event_type")
         writer.exclude("dl1/monitoring/subarray/pointing", "tels_with_trigger")
         writer.exclude("dl1/monitoring/subarray/pointing", "n_trigger_pixels")
-        writer.exclude("/dl1/event/telescope/trigger", "trigger_pixels")
+        writer.exclude("/dl0/event/telescope/trigger", "trigger_pixels")
         writer.exclude("/dl1/monitoring/telescope/pointing/.*", "n_trigger_pixels")
         writer.exclude("/dl1/monitoring/telescope/pointing/.*", "trigger_pixels")
         writer.exclude("/dl1/monitoring/event/pointing/.*", "event_type")
@@ -506,10 +646,10 @@ class DataWriter(Component):
     def _write_subarray_pointing(self, event: ArrayEventContainer):
         """store subarray pointing info in a monitoring table"""
         pnt = event.pointing
-        current_pointing = (pnt.array_azimuth, pnt.array_altitude)
+        current_pointing = (pnt.azimuth, pnt.altitude)
         if current_pointing != self._last_pointing:
             pnt.prefix = ""
-            self._writer.write("dl1/monitoring/subarray/pointing", [event.trigger, pnt])
+            self._writer.write("dl1/monitoring/subarray/pointing", [event.dl0.trigger, pnt])
             self._last_pointing = current_pointing
 
     def _write_scheduling_and_observation_blocks(self):
@@ -611,156 +751,6 @@ class DataWriter(Component):
     def table_name(self, tel_id):
         """construct dataset table names depending on chosen split method"""
         return f"tel_{tel_id:03d}"
-
-    def _write_trigger(self, event: ArrayEventContainer):
-        """
-        Write trigger information
-        """
-        self._writer.write(
-            table_name="dl1/event/subarray/trigger",
-            containers=[event.index, event.trigger],
-        )
-
-        for tel_id, trigger in event.trigger.tel.items():
-            self._writer.write(
-                "dl1/event/telescope/trigger", (_get_tel_index(event, tel_id), trigger)
-            )
-
-    def _write_r1_telescope_events(self, event: ArrayEventContainer):
-        for tel_id, r1_tel in event.r1.tel.items():
-
-            tel_index = _get_tel_index(event, tel_id)
-            table_name = self.table_name(tel_id)
-
-            r1_tel.prefix = ""
-            self._writer.write(f"r1/event/telescope/{table_name}", [tel_index, r1_tel])
-
-    def _write_r0_telescope_events(self, event: ArrayEventContainer):
-        for tel_id, r0_tel in event.r0.tel.items():
-
-            tel_index = _get_tel_index(event, tel_id)
-            table_name = self.table_name(tel_id)
-
-            r0_tel.prefix = ""
-            self._writer.write(f"r0/event/telescope/{table_name}", [tel_index, r0_tel])
-
-    def _write_dl1_telescope_events(self, event: ArrayEventContainer):
-        """
-        add entries to the event/telescope tables for each telescope in a single
-        event
-        """
-
-        # pointing info
-        for tel_id, pnt in event.pointing.tel.items():
-            current_pointing = (pnt.azimuth, pnt.altitude)
-            if current_pointing != self._last_pointing_tel[tel_id]:
-                pnt.prefix = ""
-                self._writer.write(
-                    f"dl1/monitoring/telescope/pointing/tel_{tel_id:03d}",
-                    [event.trigger.tel[tel_id], pnt],
-                )
-                self._last_pointing_tel[tel_id] = current_pointing
-
-        for tel_id, dl1_camera in event.dl1.tel.items():
-            tel_index = _get_tel_index(event, tel_id)
-
-            dl1_camera.prefix = ""  # don't want a prefix for this container
-            telescope = self._subarray.tel[tel_id]
-            self.log.debug("WRITING TELESCOPE %s: %s", tel_id, telescope)
-
-            table_name = self.table_name(tel_id)
-
-            if self.write_parameters:
-                self._writer.write(
-                    table_name=f"dl1/event/telescope/parameters/{table_name}",
-                    containers=[tel_index, *dl1_camera.parameters.values()],
-                )
-
-            if self.write_images:
-                if dl1_camera.image is None:
-                    raise ValueError(
-                        "DataWriter.write_images is True but event does not contain image"
-                    )
-
-                self._writer.write(
-                    table_name=f"dl1/event/telescope/images/{table_name}",
-                    containers=[tel_index, dl1_camera],
-                )
-
-            if self._is_simulation:
-                # always write this, so that at least the sum is included
-                self._writer.write(
-                    f"simulation/event/telescope/images/{table_name}",
-                    [tel_index, event.simulation.tel[tel_id]],
-                )
-
-                has_sim_image = (
-                    tel_id in event.simulation.tel
-                    and event.simulation.tel[tel_id].true_image is not None
-                )
-                if self.write_parameters and has_sim_image:
-                    true_parameters = event.simulation.tel[tel_id].true_parameters
-                    # only write the available containers, no peak time related
-                    # features for true image available.
-                    self._writer.write(
-                        f"simulation/event/telescope/parameters/{table_name}",
-                        [
-                            tel_index,
-                            true_parameters.hillas,
-                            true_parameters.leakage,
-                            true_parameters.concentration,
-                            true_parameters.morphology,
-                            true_parameters.intensity_statistics,
-                        ],
-                    )
-
-    def _write_muon_telescope_events(self, event: ArrayEventContainer):
-
-        for tel_id, muon in event.muon.tel.items():
-            table_name = self.table_name(tel_id)
-            tel_index = _get_tel_index(event, tel_id)
-            self._writer.write(
-                f"dl1/event/telescope/muon/{table_name}",
-                [tel_index, muon.ring, muon.parameters, muon.efficiency],
-            )
-
-    def _write_dl2_telescope_events(self, event: ArrayEventContainer):
-        """
-        write per-telescope DL2 shower information.
-
-        Currently this writes to a single table per type of shower
-        reconstruction and per algorithm, with all telescopes combined.
-        """
-
-        for tel_id, dl2_tel in event.dl2.tel.items():
-            table_name = self.table_name(tel_id)
-
-            tel_index = _get_tel_index(event, tel_id)
-            for container_name, algorithm_map in dl2_tel.items():
-                for algorithm, container in algorithm_map.items():
-                    name = (
-                        f"dl2/event/telescope/{container_name}/{algorithm}/{table_name}"
-                    )
-
-                    self._writer.write(
-                        table_name=name, containers=[tel_index, container]
-                    )
-
-    def _write_dl2_stereo_event(self, event: ArrayEventContainer):
-        """
-        write per-telescope DL2 shower information to e.g.
-        `/dl2/event/stereo/{geometry,energy,classification}/<algorithm_name>`
-        """
-        # pylint: disable=no-self-use
-        for container_name, algorithm_map in event.dl2.stereo.items():
-            for algorithm, container in algorithm_map.items():
-                # note this will only write info if the particular algorithm
-                # generated it (otherwise the algorithm map is empty, and no
-                # data will be written)
-                self._writer.write(
-                    table_name=f"dl2/event/subarray/{container_name}/{algorithm}",
-                    containers=[event.index, container],
-                )
 
     def _generate_table_indices(self, h5file, start_node):
         """helper to generate PyTables index tabnles for common columns"""

@@ -21,11 +21,11 @@ from traitlets import TraitError
 from ctapipe.exceptions import TooFewEvents
 
 from ..containers import (
-    ArrayEventContainer,
     DispContainer,
     ParticleClassificationContainer,
     ReconstructedEnergyContainer,
     ReconstructedGeometryContainer,
+    SubarrayEventContainer,
 )
 from ..coordinates import TelescopeFrame
 from ..core import Component, FeatureGenerator, Provenance, QualityQuery, traits
@@ -154,7 +154,7 @@ class SKLearnReconstructor(Reconstructor):
                 self.prefix = self.model_cls
 
     @abstractmethod
-    def __call__(self, event: ArrayEventContainer) -> None:
+    def __call__(self, event: SubarrayEventContainer) -> None:
         """Event-wise prediction for the EventSource-Loop.
 
         Fills the event.dl2.<your-feature>[name] container.
@@ -364,7 +364,7 @@ class EnergyRegressor(SKLearnRegressionReconstructor):
     target = "true_energy"
     property = ReconstructionProperty.ENERGY
 
-    def __call__(self, event: ArrayEventContainer) -> None:
+    def __call__(self, event: SubarrayEventContainer) -> None:
         """
         Apply model for a single event and fill result into the event container
         """
@@ -436,7 +436,7 @@ class ParticleClassifier(SKLearnClassificationReconstructor):
 
     property = ReconstructionProperty.PARTICLE_TYPE
 
-    def __call__(self, event: ArrayEventContainer) -> None:
+    def __call__(self, event: SubarrayEventContainer) -> None:
         for tel_id in event.trigger.tels_with_trigger:
             table = collect_features(event, tel_id, self.instrument_table)
             table = self.feature_generator(table, subarray=self.subarray)
@@ -669,7 +669,7 @@ class DispReconstructor(Reconstructor):
 
         return prediction, valid
 
-    def __call__(self, event: ArrayEventContainer) -> None:
+    def __call__(self, event: SubarrayEventContainer) -> None:
         """Event-wise prediction for the EventSource-Loop.
 
         Fills the event.dl2.tel[tel_id].disp[prefix] container

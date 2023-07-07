@@ -195,7 +195,7 @@ def test_allowed_telescopes():
         assert not allowed_tels.symmetric_difference(reader.subarray.tel_ids)
         for event in reader:
             assert set(event.tel).issubset(allowed_tels)
-            assert set(event.trigger.tels_with_trigger).issubset(allowed_tels)
+            assert set(event.dl0.trigger.tels_with_trigger).issubset(allowed_tels)
 
 
 def test_calibration_events():
@@ -224,7 +224,7 @@ def test_calibration_events():
         for event, expected_type, expected_id in zip_longest(
             reader, expected_types, expected_ids
         ):
-            assert event.trigger.event_type is expected_type
+            assert event.dl0.trigger.event_type is expected_type
             assert event.index.event_id == expected_id
 
 
@@ -238,12 +238,14 @@ def test_trigger_times():
     t1 = Time("2020-05-06T15:40:00")
 
     for array_event in source:
-        assert t0 <= array_event.trigger.time <= t1
+        assert t0 <= array_event.dl0.trigger.time <= t1
         for tel_event in array_event.tel.values():
             # test single telescope events triggered within 50 ns
             assert (
                 0
-                <= (tel_event.trigger.time - array_event.trigger.time).to_value(u.ns)
+                <= (tel_event.dl0.trigger.time - array_event.dl0.trigger.time).to_value(
+                    u.ns
+                )
                 <= 50
             )
 

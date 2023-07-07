@@ -11,10 +11,10 @@ from ctapipe.core.traits import Bool, CaselessStrEnum, Unicode
 from ctapipe.reco.reconstructor import ReconstructionProperty
 
 from ..containers import (
-    ArrayEventContainer,
     ParticleClassificationContainer,
     ReconstructedEnergyContainer,
     ReconstructedGeometryContainer,
+    SubarrayEventContainer,
 )
 from .utils import add_defaults_and_meta
 
@@ -76,7 +76,7 @@ class StereoCombiner(Component):
     ).tag(config=True)
 
     @abstractmethod
-    def __call__(self, event: ArrayEventContainer) -> None:
+    def __call__(self, event: SubarrayEventContainer) -> None:
         """
         Fill event container with stereo predictions
         """
@@ -263,7 +263,7 @@ class StereoMeanCombiner(StereoCombiner):
             prefix=self.prefix,
         )
 
-    def __call__(self, event: ArrayEventContainer) -> None:
+    def __call__(self, event: SubarrayEventContainer) -> None:
         """
         Calculate the mean prediction for a single array event.
         """

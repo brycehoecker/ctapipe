@@ -6,7 +6,7 @@ from astropy.time import Time
 from traitlets.config import Config
 
 from ctapipe.calib.camera.flatfield import FlasherFlatFieldCalculator
-from ctapipe.containers import ArrayEventContainer
+from ctapipe.containers import SubarrayEventContainer
 from ctapipe.instrument import SubarrayDescription
 
 
@@ -37,7 +37,7 @@ def test_flasherflatfieldcalculator(prod5_sst):
         config=config,
     )
     # create one event
-    data = ArrayEventContainer()
+    data = SubarrayEventContainer()
     data.meta["origin"] = "test"
     data.trigger.time = Time.now()
 

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_equal
 
-from ctapipe.containers import ArrayEventContainer
+from ctapipe.containers import SubarrayEventContainer
 from ctapipe.io import EventSource
 
 
@@ -37,38 +37,38 @@ def test_software_trigger(subarray_prod5_paranal, data_type):
     )
 
     # only one telescope, no SWAT
-    event = ArrayEventContainer()
+    event = SubarrayEventContainer()
     event.trigger.tels_with_trigger = data_type([5])
     assert trigger(event) == False
     assert_equal(event.trigger.tels_with_trigger, data_type([]))
 
     # 1 LST + 1 MST, 1 LST would not have triggered LST hardware trigger
     # and after LST is removed, we only have 1 telescope, so no SWAT either
-    event = ArrayEventContainer()
+    event = SubarrayEventContainer()
     event.trigger.tels_with_trigger = data_type([1, 6])
     assert trigger(event) == False
     assert_equal(event.trigger.tels_with_trigger, data_type([]))
 
     # two MSTs and 1 LST, -> remove single LST
-    event = ArrayEventContainer()
+    event = SubarrayEventContainer()
     event.trigger.tels_with_trigger = data_type([1, 5, 6])
     assert trigger(event) == True
     assert_equal(event.trigger.tels_with_trigger, data_type([5, 6]))
 
     # two MSTs, nothing to change
-    event = ArrayEventContainer()
+    event = SubarrayEventContainer()
     event.trigger.tels_with_trigger = data_type([5, 6])
     assert trigger(event) == True
     assert_equal(event.trigger.tels_with_trigger, data_type([5, 6]))
 
     # three LSTs, nothing to change
-    event = ArrayEventContainer()
+    event = SubarrayEventContainer()
     event.trigger.tels_with_trigger = data_type([1, 2, 3])
     assert trigger(event) == True
     assert_equal(event.trigger.tels_with_trigger, data_type([1, 2, 3]))
 
     # thee LSTs, plus MSTs, nothing to change
-    event = ArrayEventContainer()
+    event = SubarrayEventContainer()
     event.trigger.tels_with_trigger = data_type([1, 2, 3, 5, 6, 7])
     assert trigger(event) == True
     assert_equal(event.trigger.tels_with_trigger, data_type([1, 2, 3, 5, 6, 7]))

@@ -23,7 +23,7 @@ __all__ = ["TableLoader"]
 PARAMETERS_GROUP = "/dl1/event/telescope/parameters"
 IMAGES_GROUP = "/dl1/event/telescope/images"
 MUON_GROUP = "/dl1/event/telescope/muon"
-TRIGGER_TABLE = "/dl1/event/subarray/trigger"
+TRIGGER_TABLE = "/dl0/event/subarray/trigger"
 SHOWER_TABLE = "/simulation/event/subarray/shower"
 TRUE_IMAGES_GROUP = "/simulation/event/telescope/images"
 TRUE_PARAMETERS_GROUP = "/simulation/event/telescope/parameters"
@@ -462,7 +462,7 @@ class TableLoader(Component):
 
         table = read_table(
             self.h5file,
-            "/dl1/event/telescope/trigger",
+            "/dl0/event/telescope/trigger",
             condition=f"tel_id == {tel_id}",
             start=trigger_start,
             stop=trigger_stop,

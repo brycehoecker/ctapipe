@@ -11,7 +11,7 @@ from ctapipe.calib.camera.pedestals import (
     PedestalIntegrator,
     calc_pedestals_from_traces,
 )
-from ctapipe.containers import ArrayEventContainer
+from ctapipe.containers import SubarrayEventContainer
 from ctapipe.instrument import SubarrayDescription
 
 
@@ -39,7 +39,7 @@ def test_pedestal_integrator(prod5_sst):
         tel_id=tel_id,
     )
     # create one event
-    data = ArrayEventContainer()
+    data = SubarrayEventContainer()
     data.meta["origin"] = "test"
     data.trigger.time = Time.now()
 

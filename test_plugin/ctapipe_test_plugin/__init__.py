@@ -19,7 +19,7 @@ from ctapipe.instrument import (
     TelescopeDescription,
 )
 from ctapipe.io import DataLevel, EventSource
-from ctapipe.io.datawriter import ArrayEventContainer
+from ctapipe.io.datawriter import SubarrayEventContainer
 from ctapipe.reco import Reconstructor
 
 __all__ = [
@@ -92,7 +92,7 @@ class PluginEventSource(EventSource):
     def _generator(self):
         """Foo"""
         for i in range(10):
-            yield ArrayEventContainer(count=i)
+            yield SubarrayEventContainer(count=i)
 
 
 class PluginReconstructor(Reconstructor):
@@ -102,6 +102,6 @@ class PluginReconstructor(Reconstructor):
         True, help="example traitlet to see that it is included in --help"
     ).tag(config=True)
 
-    def __call__(self, event: ArrayEventContainer):
+    def __call__(self, event: SubarrayEventContainer):
         """Foo"""
         event.dl2.geometry["PluginReconstructor"] = ReconstructedGeometryContainer()

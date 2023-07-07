@@ -10,10 +10,10 @@ from traitlets.config.loader import LazyConfigValue
 from ctapipe.atmosphere import AtmosphereDensityProfile
 
 from ..containers import (
-    ArrayEventContainer,
     ObservationBlockContainer,
     SchedulingBlockContainer,
     SimulationConfigContainer,
+    SubarrayEventContainer,
 )
 from ..core import Provenance, ToolConfigurationError
 from ..core.component import Component, find_config_in_hierarchy
@@ -300,7 +300,7 @@ class EventSource(Component):
         return None
 
     @abstractmethod
-    def _generator(self) -> Generator[ArrayEventContainer, None, None]:
+    def _generator(self) -> Generator[SubarrayEventContainer, None, None]:
         """
         Abstract method to be defined in child class.
 

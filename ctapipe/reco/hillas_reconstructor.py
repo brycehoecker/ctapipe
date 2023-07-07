@@ -144,7 +144,7 @@ class HillasReconstructor(HillasGeometryReconstructor):
         try:
             hillas_dict = self._create_hillas_dict(event)
         except (TooFewTelescopesException, InvalidWidthException):
-            event.dl2.stereo.geometry[self.__class__.__name__] = INVALID
+            event.dl2.geometry[self.__class__.__name__] = INVALID
             self._store_impact_parameter(event)
             return
 
@@ -165,7 +165,7 @@ class HillasReconstructor(HillasGeometryReconstructor):
 
         # store core corrected psi values
         for tel_id, psi in zip(tel_ids, corrected_psi):
-            event.dl1.tel[tel_id].parameters.core.psi = u.Quantity(
+            event.tel[tel_id].dl1.parameters.core.psi = u.Quantity(
                 np.rad2deg(psi), u.deg
             )
 
@@ -186,9 +186,7 @@ class HillasReconstructor(HillasGeometryReconstructor):
         # az is clockwise, lon counter-clockwise, make sure it stays in [0, 2pi)
         az = Longitude(-lon)
 
-        event.dl2.stereo.geometry[
-            self.__class__.__name__
-        ] = ReconstructedGeometryContainer(
+        event.dl2.geometry[self.__class__.__name__] = ReconstructedGeometryContainer(
             alt=lat,
             az=az,
             core_x=core_pos_ground.x,
@@ -230,10 +228,9 @@ class HillasReconstructor(HillasGeometryReconstructor):
         # get one telescope id to check what frame to use
         altaz = AltAz()
 
-        # Due to tracking the pointing of the array will never be a constant
         array_pointing = SkyCoord(
-            az=event.pointing.array_azimuth,
-            alt=event.pointing.array_altitude,
+            az=event.pointing.azimuth,
+            alt=event.pointing.altitude,
             frame=altaz,
         )
 
@@ -254,7 +251,7 @@ class HillasReconstructor(HillasGeometryReconstructor):
         for i, (tel_id, hillas) in enumerate(hillas_dict.items()):
             tel_ids[i] = tel_id
 
-            pointing = event.pointing.tel[tel_id]
+            pointing = event.tel[tel_id].pointing
             alt[i] = pointing.altitude.to_value(u.rad)
             az[i] = pointing.azimuth.to_value(u.rad)
 

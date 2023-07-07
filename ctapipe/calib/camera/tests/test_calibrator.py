@@ -11,12 +11,12 @@ from traitlets.config import Config
 
 from ctapipe.calib.camera.calibrator import CameraCalibrator
 from ctapipe.containers import (
-    ArrayEventContainer,
-    TelescopeDL0Container,
-    TelescopeDL1Container,
+    DL0TelescopeContainer,
+    DL1TelescopeContainer,
+    R1TelescopeContainer,
+    SubarrayEventContainer,
     TelescopeEventContainer,
     TelescopeEventIndexContainer,
-    TelescopeR1Container,
 )
 from ctapipe.image.extractor import (
     FullWaveformSum,
@@ -114,17 +114,17 @@ def test_check_r1_empty(example_event, example_subarray):
         assert tel_event.dl0.waveform is None
 
     assert calibrator._check_r1_empty(None) is True
-    assert calibrator._check_r1_empty(TelescopeR1Container(waveform=None)) is True
-    assert calibrator._check_r1_empty(TelescopeR1Container(waveform=waveform)) is False
+    assert calibrator._check_r1_empty(R1TelescopeContainer(waveform=None)) is True
+    assert calibrator._check_r1_empty(R1TelescopeContainer(waveform=waveform)) is False
 
     calibrator = CameraCalibrator(
         subarray=example_subarray,
         image_extractor=FullWaveformSum(subarray=example_subarray),
     )
-    event = ArrayEventContainer()
+    event = SubarrayEventContainer()
     event.tel[tel_id] = TelescopeEventContainer(
         index=TelescopeEventIndexContainer(obs_id=1, event_id=1, tel_id=tel_id),
-        dl0=TelescopeDL0Container(waveform=np.full((2048, 128), 2)),
+        dl0=DL0TelescopeContainer(waveform=np.full((2048, 128), 2)),
     )
     with pytest.warns(UserWarning):
         calibrator(event)
@@ -145,16 +145,16 @@ def test_check_dl0_empty(example_event, example_subarray):
         assert tel_event.dl1.image is None
 
     assert calibrator._check_dl0_empty(None) is True
-    assert calibrator._check_dl0_empty(TelescopeDL0Container(waveform=None)) is True
+    assert calibrator._check_dl0_empty(DL0TelescopeContainer(waveform=None)) is True
     assert (
-        calibrator._check_dl0_empty(TelescopeDL0Container(waveform=waveform)) is False
+        calibrator._check_dl0_empty(DL0TelescopeContainer(waveform=waveform)) is False
     )
 
     calibrator = CameraCalibrator(subarray=example_subarray)
-    event = ArrayEventContainer()
+    event = SubarrayEventContainer()
     tel_event = TelescopeEventContainer(
         index=TelescopeEventIndexContainer(obs_id=1, event_id=1, tel_id=tel_id),
-        dl1=TelescopeDL1Container(image=np.full(2048, 2)),
+        dl1=DL1TelescopeContainer(image=np.full(2048, 2)),
     )
     event.tel[tel_id] = tel_event
     with pytest.warns(UserWarning):
@@ -198,10 +198,10 @@ def test_dl1_charge_calib(example_subarray):
     pedestal = rng.uniform(-4, 4, n_pixels)
     y += pedestal[:, np.newaxis]
 
-    event = ArrayEventContainer()
+    event = SubarrayEventContainer()
     event.tel[tel_id] = TelescopeEventContainer(
         index=TelescopeEventIndexContainer(obs_id=1, event_id=1, tel_id=tel_id),
-        dl0=TelescopeDL0Container(
+        dl0=DL0TelescopeContainer(
             waveform=y,
             selected_gain_channel=np.zeros(len(y), dtype=int),
         ),

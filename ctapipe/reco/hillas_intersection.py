@@ -102,20 +102,20 @@ class HillasIntersection(HillasGeometryReconstructor):
         try:
             hillas_dict = self._create_hillas_dict(event)
         except (TooFewTelescopesException, InvalidWidthException):
-            event.dl2.stereo.geometry[self.__class__.__name__] = INVALID
+            event.dl2.geometry[self.__class__.__name__] = INVALID
             self._store_impact_parameter(event)
             return
 
         # Due to tracking the pointing of the array will never be a constant
         array_pointing = SkyCoord(
-            az=event.pointing.array_azimuth,
-            alt=event.pointing.array_altitude,
+            az=event.pointing.azimuth,
+            alt=event.pointing.altitude,
             frame=AltAz(),
         )
 
         telescope_pointings = self._get_telescope_pointings(event)
 
-        event.dl2.stereo.geometry[self.__class__.__name__] = self._predict(
+        event.dl2.geometry[self.__class__.__name__] = self._predict(
             hillas_dict, array_pointing, telescope_pointings
         )
 

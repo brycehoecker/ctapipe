@@ -225,7 +225,6 @@ class ImageProcessor(TelescopeComponent):
             image=dl1.image,
             arrival_times=dl1.peak_time,
         )
-
         dl1.parameters = self._parameterize_image(
             tel_id=tel_id,
             image=dl1.image,

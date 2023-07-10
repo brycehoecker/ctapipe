@@ -314,6 +314,8 @@ class DataWriter(Component):
             containers=[event.index, event.dl0.trigger],
         )
 
+        self._write_subarray_pointing(event)
+
     def _write_telescope_event(self, tel_event):
         table_name = self.table_name(tel_event.index.tel_id)
         self._writer.write(
@@ -373,7 +375,7 @@ class DataWriter(Component):
             table_name = self.table_name(tel_id)
             tel_event.pointing.prefix = ""
             self._writer.write(
-                f"dl1/monitoring/telescope/pointing/{table_name}",
+                f"dl0/monitoring/telescope/pointing/{table_name}",
                 [tel_event.dl0.trigger, tel_event.pointing],
             )
             self._last_pointing_tel[tel_id] = current_pointing
@@ -578,13 +580,13 @@ class DataWriter(Component):
         # currently the trigger info is used for the event time, but we dont'
         # want the other bits of the trigger container in the pointing or other
         # montitoring containers
-        writer.exclude("dl1/monitoring/subarray/pointing", "event_type")
-        writer.exclude("dl1/monitoring/subarray/pointing", "tels_with_trigger")
-        writer.exclude("dl1/monitoring/subarray/pointing", "n_trigger_pixels")
+        writer.exclude("dl0/monitoring/subarray/pointing", "event_type")
+        writer.exclude("dl0/monitoring/subarray/pointing", "tels_with_trigger")
+        writer.exclude("dl0/monitoring/subarray/pointing", "n_trigger_pixels")
         writer.exclude("/dl0/event/telescope/trigger", "trigger_pixels")
-        writer.exclude("/dl1/monitoring/telescope/pointing/.*", "n_trigger_pixels")
-        writer.exclude("/dl1/monitoring/telescope/pointing/.*", "trigger_pixels")
-        writer.exclude("/dl1/monitoring/event/pointing/.*", "event_type")
+        writer.exclude("/dl0/monitoring/telescope/pointing/.*", "n_trigger_pixels")
+        writer.exclude("/dl0/monitoring/telescope/pointing/.*", "trigger_pixels")
+        writer.exclude("/dl0/monitoring/event/pointing/.*", "event_type")
         writer.exclude("/dl1/event/telescope/images/.*", "parameters")
         writer.exclude("/simulation/event/telescope/images/.*", "true_parameters")
 
@@ -649,7 +651,7 @@ class DataWriter(Component):
         if current_pointing != self._last_pointing:
             pnt.prefix = ""
             self._writer.write(
-                "dl1/monitoring/subarray/pointing", [event.dl0.trigger, pnt]
+                "dl0/monitoring/subarray/pointing", [event.dl0.trigger, pnt]
             )
             self._last_pointing = current_pointing
 

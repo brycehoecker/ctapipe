@@ -571,13 +571,18 @@ class HDF5EventSource(EventSource):
             ignore_columns={"trigger_pixels"},
         )
 
-        array_pointing_finder = IndexFinder(
-            self.file_.root.dl0.monitoring.subarray.pointing.col("time")
-        )
+        table_path = "/dl1/monitoring/subarray/pointing"
+        if table_path not in self.file_.root:
+            table_path = "/dl0/monitoring/subarray/pointing"
 
+        array_pointing_finder = IndexFinder(self.file_.root[table_path].col("time"))
+
+        group_path = "/dl1/monitoring/telescope/pointing"
+        if group_path not in self.file_.root:
+            group_path = "/dl0/monitoring/telescope/pointing"
         tel_pointing_finder = {
             table.name: IndexFinder(table.col("time"))
-            for table in self.file_.root.dl0.monitoring.telescope.pointing
+            for table in self.file_.root[group_path]
         }
 
         counter = 0

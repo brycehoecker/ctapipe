@@ -113,10 +113,7 @@ class SoftwareTrigger(TelescopeComponent):
             )
 
         if len(event.dl0.trigger.tels_with_trigger) < self.min_telescopes:
-            event.trigger.tels_with_trigger = []
-            # remove any related data
-            for container in event.values():
-                if hasattr(container, "tel"):
-                    container.tel.clear()
+            event.dl0.trigger.tels_with_trigger = []
+            event.tel.clear()
             return False
         return True

@@ -24,6 +24,9 @@ PARAMETERS_GROUP = "/dl1/event/telescope/parameters"
 IMAGES_GROUP = "/dl1/event/telescope/images"
 MUON_GROUP = "/dl1/event/telescope/muon"
 TRIGGER_TABLE = "/dl0/event/subarray/trigger"
+TRIGGER_TABLE_OLD = "/dl1/event/subarray/trigger"
+TEL_TRIGGER_TABLE = "/dl0/event/telescope/trigger"
+TEL_TRIGGER_TABLE_OLD = "/dl1/event/telescope/trigger"
 SHOWER_TABLE = "/simulation/event/subarray/shower"
 TRUE_IMAGES_GROUP = "/simulation/event/telescope/images"
 TRUE_PARAMETERS_GROUP = "/simulation/event/telescope/parameters"
@@ -280,7 +283,19 @@ class TableLoader(Component):
 
     def __len__(self):
         """Number of subarray events in input file"""
-        return self.h5file.root[TRIGGER_TABLE].shape[0]
+        return self.h5file.root[self._trigger_table].shape[0]
+
+    @property
+    def _trigger_table(self):
+        if TRIGGER_TABLE_OLD in self.h5file.root:
+            return TRIGGER_TABLE_OLD
+        return TRIGGER_TABLE
+
+    @property
+    def _tel_trigger_table(self):
+        if TEL_TRIGGER_TABLE_OLD in self.h5file.root:
+            return TEL_TRIGGER_TABLE_OLD
+        return TEL_TRIGGER_TABLE
 
     def _read_telescope_table(self, group, tel_id, start=None, stop=None):
         key = f"{group}/tel_{tel_id:03d}"
@@ -302,7 +317,7 @@ class TableLoader(Component):
         """
         table = read_table(
             self.h5file,
-            TRIGGER_TABLE,
+            self._trigger_table,
             start=start,
             stop=stop,
         )[["obs_id", "event_id"]]
@@ -377,7 +392,14 @@ class TableLoader(Component):
         table: astropy.io.Table
             Table with primary index columns "obs_id" and "event_id".
         """
-        table = read_table(self.h5file, TRIGGER_TABLE, start=start, stop=stop)
+
+        table = read_table(
+            self.h5file,
+            self._trigger_table,
+            start=start,
+            stop=stop,
+        )
+
         if keep_order:
             self._add_index_if_needed(table)
 
@@ -462,7 +484,7 @@ class TableLoader(Component):
 
         table = read_table(
             self.h5file,
-            "/dl0/event/telescope/trigger",
+            self._tel_trigger_table,
             condition=f"tel_id == {tel_id}",
             start=trigger_start,
             stop=trigger_stop,
@@ -646,7 +668,7 @@ class TableLoader(Component):
         """
         # we need to load the trigger table until "stop" to
         # know which telescopes participated in which events
-        table = self.h5file.root[TRIGGER_TABLE]
+        table = self.h5file.root[self._trigger_table]
         n_events = table.shape[0]
         n_telescopes = table.coldescrs["tels_with_trigger"].shape[0]
 

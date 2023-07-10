@@ -415,8 +415,9 @@ def test_order_merged():
 
     path = get_dataset_path("gamma_diffuse_dl2_train_small.dl2.h5")
 
-    trigger = read_table(path, "/dl0/event/subarray/trigger")
-    tel_trigger = read_table(path, "/dl0/event/telescope/trigger")
+    # FIXME: old file, change to dl0 when updating
+    trigger = read_table(path, "/dl1/event/subarray/trigger")
+    tel_trigger = read_table(path, "/dl1/event/telescope/trigger")
     with TableLoader(
         path,
         load_dl1_parameters=True,

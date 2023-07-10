@@ -210,11 +210,11 @@ class PedestalIntegrator(PedestalCalculator):
         -------
         DL1CameraContainer
         """
-        waveforms = event.r1.tel[self.tel_id].waveform
-        selected_gain_channel = event.r1.tel[self.tel_id].selected_gain_channel
+        waveforms = event.tel[self.tel_id].r1.waveform
+        selected_gain_channel = event.tel[self.tel_id].r1.selected_gain_channel
         broken_pixels = _get_invalid_pixels(
             n_pixels=waveforms.shape[-2],
-            pixel_status=event.mon.tel[self.tel_id].pixel_status,
+            pixel_status=event.tel[self.tel_id].mon.pixel_status,
             selected_gain_channel=selected_gain_channel,
         )
 
@@ -238,17 +238,17 @@ class PedestalIntegrator(PedestalCalculator):
 
         """
         # initialize the np array at each cycle
-        waveform = event.r1.tel[self.tel_id].waveform
-        container = event.mon.tel[self.tel_id].pedestal
+        waveform = event.tel[self.tel_id].r1.waveform
+        container = event.tel[self.tel_id].mon.pedestal
 
         # re-initialize counter
         if self.n_events_seen == self.sample_size:
             self.n_events_seen = 0
 
         # real data
-        trigger_time = event.trigger.time
+        trigger_time = event.dl0.trigger.time
         if event.meta["origin"] != "hessio":
-            pixel_mask = event.mon.tel[self.tel_id].pixel_status.hardware_failing_pixels
+            pixel_mask = event.tel[self.tel_id].mon.pixel_status.hardware_failing_pixels
         else:  # patches for MC data
             pixel_mask = np.zeros(waveform.shape[1], dtype=bool)
 

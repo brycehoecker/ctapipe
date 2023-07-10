@@ -88,10 +88,11 @@ def collect_features(
     """
     features = {}
 
-    features.update(event.trigger.as_dict(recursive=False, flatten=True))
+    features.update(event.dl0.trigger.as_dict(recursive=False, flatten=True))
 
+    tel_event = event.tel[tel_id]
     features.update(
-        event.dl1.tel[tel_id].parameters.as_dict(
+        tel_event.dl1.parameters.as_dict(
             add_prefix=True,
             recursive=True,
             flatten=True,
@@ -99,7 +100,7 @@ def collect_features(
     )
 
     features.update(
-        event.dl2.tel[tel_id].as_dict(
+        tel_event.dl2.as_dict(
             add_prefix=True,
             recursive=True,
             flatten=True,
@@ -108,7 +109,7 @@ def collect_features(
     )
 
     features.update(
-        event.dl2.stereo.as_dict(
+        event.dl2.as_dict(
             add_prefix=True,
             recursive=True,
             flatten=True,

@@ -182,11 +182,11 @@ class FlasherFlatFieldCalculator(FlatFieldCalculator):
         DL1CameraContainer
         """
 
-        waveforms = event.r1.tel[self.tel_id].waveform
-        selected_gain_channel = event.r1.tel[self.tel_id].selected_gain_channel
+        waveforms = event.tel[self.tel_id].r1.waveform
+        selected_gain_channel = event.tel[self.tel_id].r1.selected_gain_channel
         broken_pixels = _get_invalid_pixels(
             n_pixels=waveforms.shape[-2],
-            pixel_status=event.mon.tel[self.tel_id].pixel_status,
+            pixel_status=event.tel[self.tel_id].mon.pixel_status,
             selected_gain_channel=selected_gain_channel,
         )
         # Extract charge and time
@@ -209,23 +209,23 @@ class FlasherFlatFieldCalculator(FlatFieldCalculator):
         """
 
         # initialize the np array at each cycle
-        waveform = event.r1.tel[self.tel_id].waveform
-        container = event.mon.tel[self.tel_id].flatfield
+        waveform = event.tel[self.tel_id].r1.waveform
+        container = event.tel[self.tel_id].mon.flatfield
 
         # re-initialize counter
         if self.n_events_seen == self.sample_size:
             self.n_events_seen = 0
 
         # real data
-        trigger_time = event.trigger.time
+        trigger_time = event.dl0.trigger.time
         if event.meta["origin"] != "hessio":
             hardware_or_pedestal_mask = np.logical_or(
-                event.mon.tel[self.tel_id].pixel_status.hardware_failing_pixels,
-                event.mon.tel[self.tel_id].pixel_status.pedestal_failing_pixels,
+                event.tel[self.tel_id].mon.pixel_status.hardware_failing_pixels,
+                event.tel[self.tel_id].mon.pixel_status.pedestal_failing_pixels,
             )
             pixel_mask = np.logical_or(
                 hardware_or_pedestal_mask,
-                event.mon.tel[self.tel_id].pixel_status.flatfield_failing_pixels,
+                event.tel[self.tel_id].mon.pixel_status.flatfield_failing_pixels,
             )
 
         else:  # patches for MC data

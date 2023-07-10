@@ -72,7 +72,7 @@ def test_apply_energy_regressor(
         assert f"{prefix}_tel_is_valid" in tel_events.colnames
         assert "hillas_intensity" in tel_events.colnames
 
-    trigger = read_table(output_path, "/dl1/event/subarray/trigger")
+    trigger = read_table(output_path, "/dl0/event/subarray/trigger")
     energy = read_table(output_path, "/dl2/event/subarray/energy/ExtraTreesRegressor")
 
     check_equal_array_event_order(trigger, energy)
@@ -158,6 +158,7 @@ def test_apply_all(
         # test file is produced using 0.17, the descriptions don't match
         # assert table[colname].description == field.description
 
+    # FIXME: old file, change to dl0 when updating test file
     trigger = read_table(output_path, "/dl1/event/subarray/trigger")
 
     subarray_tables = (
@@ -170,6 +171,8 @@ def test_apply_all(
         check_equal_array_event_order(trigger, table)
 
     subarray = SubarrayDescription.from_hdf(input_path)
+
+    # FIXME: old file, change to dl0 when updating test file
     tel_trigger = read_table(output_path, "/dl1/event/telescope/trigger")
     for tel_id in subarray.tel:
         tel_keys = (

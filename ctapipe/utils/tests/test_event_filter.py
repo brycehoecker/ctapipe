@@ -11,11 +11,11 @@ def test_event_filter():
     )
 
     e = SubarrayEventContainer()
-    e.trigger.event_type = EventType.SUBARRAY
+    e.dl0.trigger.event_type = EventType.SUBARRAY
     assert event_filter(e)
-    e.trigger.event_type = EventType.FLATFIELD
+    e.dl0.trigger.event_type = EventType.FLATFIELD
     assert event_filter(e)
-    e.trigger.event_type = EventType.DARK_PEDESTAL
+    e.dl0.trigger.event_type = EventType.DARK_PEDESTAL
     assert not event_filter(e)
 
 
@@ -27,7 +27,7 @@ def test_event_filter_none():
     # all event types should pass
     e = SubarrayEventContainer()
     for value in EventType:
-        e.trigger.event_type = value
+        e.dl0.trigger.event_type = value
         assert event_filter(e)
 
 
@@ -54,8 +54,8 @@ def test_event_filter_config():
     }
 
     e = SubarrayEventContainer()
-    e.trigger.event_type = EventType.DARK_PEDESTAL
+    e.dl0.trigger.event_type = EventType.DARK_PEDESTAL
     assert not event_filter(e)
 
-    e.trigger.event_type = EventType.SUBARRAY
+    e.dl0.trigger.event_type = EventType.SUBARRAY
     assert event_filter(e)

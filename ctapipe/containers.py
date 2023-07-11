@@ -847,10 +847,12 @@ class DispContainer(Container):
     is_valid = Field(False, "true if the predictions are valid")
 
 
-class DL2SubarrayContainer(Container):
-    """Reconstructed Shower information for a given reconstruction algorithm,
-    including optionally both per-telescope mono reconstruction and per-shower
-    stereo reconstructions
+class ReconstructedShowerContainer(Container):
+    """
+    Reconstructed Shower Information
+
+    May contain reconstructions of multiple algorithms for
+    each property mapping algorithm name to containers.
     """
 
     geometry = Field(
@@ -867,13 +869,20 @@ class DL2SubarrayContainer(Container):
     )
 
 
-class DL2TelescopeContainer(DL2SubarrayContainer):
-    """Telescope-wise reconstructed quantities"""
+class DL2SubarrayContainer(ReconstructedShowerContainer):
+    """
+    DL2 subarray-wise information (reconstructed air shower properties)
+    """
+
+
+class DL2TelescopeContainer(ReconstructedShowerContainer):
+    """DL2 telescope-wise quantities"""
 
     impact = Field(
         default_factory=partial(Map, TelescopeImpactParameterContainer),
         description="map of algorithm to impact parameter info",
     )
+
     disp = Field(
         default_factory=partial(Map, DispContainer),
         description="map of algorithm to reconstructed disp parameters",

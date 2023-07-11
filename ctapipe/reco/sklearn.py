@@ -161,7 +161,7 @@ class SKLearnReconstructor(Reconstructor):
 
         Parameters
         ----------
-        event: ArrayEventContainer
+        event: SubarrayEventContainer
         """
 
     @abstractmethod
@@ -677,7 +677,7 @@ class DispReconstructor(Reconstructor):
 
         Parameters
         ----------
-        event: ArrayEventContainer
+        event: SubarrayEventContainer
         """
         for tel_id, tel_event in event.tel.items():
             table = collect_features(event, tel_id, self.instrument_table)

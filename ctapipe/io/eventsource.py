@@ -28,7 +28,7 @@ class EventSource(Component):
     """
     Parent class for EventSources.
 
-    EventSources read input files and generate `~ctapipe.containers.ArrayEventContainer`
+    EventSources read input files and generate `~ctapipe.containers.SubarrayEventContainer`
     instances when iterated over.
 
     A new EventSource should be created for each type of event file read
@@ -72,7 +72,7 @@ class EventSource(Component):
     0
     1
 
-    **NOTE**: EventSource implementations should not reuse the same ArrayEventContainer,
+    **NOTE**: EventSource implementations should not reuse the same SubarrayEventContainer,
     as these are mutable and may lead to errors when analyzing multiple events.
 
 

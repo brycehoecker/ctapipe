@@ -284,7 +284,7 @@ class CameraCalibrator(TelescopeComponent):
         Parameters
         ----------
         event : container
-            A `~ctapipe.containers.ArrayEventContainer` event container
+            A `~ctapipe.containers.SubarrayEventContainer` event container
         """
         for tel_event in event.tel.values():
             self.calibrate_tel_event(tel_event)

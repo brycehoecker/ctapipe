@@ -14,6 +14,7 @@ from ..containers import (
     IntensityStatisticsContainer,
     PeakTimeStatisticsContainer,
     SubarrayEventContainer,
+    TelescopeEventContainer,
     TimingParametersContainer,
 )
 from ..core import QualityQuery, TelescopeComponent
@@ -210,7 +211,7 @@ class ImageProcessor(TelescopeComponent):
         # parameterization
         return default
 
-    def _process_telescope_event(self, tel_event):
+    def _process_telescope_event(self, tel_event: TelescopeEventContainer):
         """
         Loop over telescopes and process the calibrated images into parameters
         """

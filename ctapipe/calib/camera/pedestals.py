@@ -134,7 +134,7 @@ class PedestalCalculator(Component):
 
         Parameters
         ----------
-        event: ctapipe.containers.ArrayEventContainer
+        event: ctapipe.containers.SubarrayEventContainer
 
         Returns: True if the mon.tel[tel_id].pedestal is updated,
                  False otherwise
@@ -203,12 +203,12 @@ class PedestalIntegrator(PedestalCalculator):
 
         Parameters
         ----------
-        event: ArrayEventContainer
+        event: SubarrayEventContainer
             general event container
 
         Returns
         -------
-        DL1CameraContainer
+        DL1TelescopeContainer
         """
         waveforms = event.tel[self.tel_id].r1.waveform
         selected_gain_channel = event.tel[self.tel_id].r1.selected_gain_channel

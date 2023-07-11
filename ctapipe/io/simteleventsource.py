@@ -22,7 +22,6 @@ from ..atmosphere import (
 )
 from ..calib.camera.gainselection import GainSelector
 from ..containers import (
-    ArrayEventIndexContainer,
     CoordinateFrameType,
     DL0SubarrayContainer,
     DL0TelescopeContainer,
@@ -42,6 +41,7 @@ from ..containers import (
     SimulationSubarrayContainer,
     SimulationTelescopeContainer,
     SubarrayEventContainer,
+    SubarrayEventIndexContainer,
     SubarrayPointingContainer,
     SubarrayTriggerContainer,
     TelescopeCalibrationContainer,
@@ -740,7 +740,7 @@ class SimTelEventSource(EventSource):
                 simulation=SimulationSubarrayContainer(shower=shower),
                 dl0=DL0SubarrayContainer(trigger=array_trigger),
                 pointing=self._fill_array_pointing(),
-                index=ArrayEventIndexContainer(obs_id=obs_id, event_id=event_id),
+                index=SubarrayEventIndexContainer(obs_id=obs_id, event_id=event_id),
             )
             event.meta["origin"] = "hessio"
             event.meta["input_url"] = self.input_url

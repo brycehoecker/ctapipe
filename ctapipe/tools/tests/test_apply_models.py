@@ -2,10 +2,10 @@ import numpy as np
 import pytest
 
 from ctapipe.containers import (
-    ArrayEventIndexContainer,
     ParticleClassificationContainer,
     ReconstructedEnergyContainer,
     ReconstructedGeometryContainer,
+    SubarrayEventIndexContainer,
 )
 from ctapipe.core import run_tool
 from ctapipe.core.tool import ToolConfigurationError
@@ -42,7 +42,8 @@ def test_apply_energy_regressor(
     table = read_table(output_path, f"/dl2/event/subarray/energy/{prefix}")
     for col in "obs_id", "event_id":
         assert (
-            table[col].description == ArrayEventIndexContainer.fields[col].description
+            table[col].description
+            == SubarrayEventIndexContainer.fields[col].description
         )
 
     for name, field in ReconstructedEnergyContainer.fields.items():

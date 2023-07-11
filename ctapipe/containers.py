@@ -12,49 +12,51 @@ from numpy import nan
 from .core import Container, Field, Map
 
 __all__ = [
-    "SubarrayEventContainer",
+    "BaseHillasParametersContainer",
+    "BaseTimingParametersContainer",
+    "CameraHillasParametersContainer",
+    "CameraTimingParametersContainer",
     "ConcentrationContainer",
+    "CoreParametersContainer",
     "DL0TelescopeContainer",
     "DL1CameraCalibrationContainer",
     "DL1TelescopeContainer",
     "DL2SubarrayContainer",
-    "TelescopeCalibrationContainer",
-    "ArrayEventIndexContainer",
+    "DispContainer",
     "EventType",
     "FlatFieldContainer",
     "HillasParametersContainer",
-    "CoreParametersContainer",
     "ImageParametersContainer",
+    "IntensityStatisticsContainer",
     "LeakageContainer",
-    "TelescopeMonitoringContainer",
     "MorphologyContainer",
-    "BaseHillasParametersContainer",
-    "CameraHillasParametersContainer",
-    "CameraTimingParametersContainer",
+    "ObservationBlockContainer",
+    "ObservationBlockState",
+    "ObservingMode",
     "ParticleClassificationContainer",
+    "PeakTimeStatisticsContainer",
     "PedestalContainer",
     "PixelStatusContainer",
     "R0TelescopeContainer",
     "R1TelescopeContainer",
+    "ReconstructedShowerContainer",
     "ReconstructedEnergyContainer",
     "ReconstructedGeometryContainer",
-    "DispContainer",
-    "SimulationTelescopeContainer",
+    "SchedulingBlockContainer",
     "SimulatedShowerContainer",
     "SimulatedShowerDistribution",
     "SimulationConfigContainer",
-    "TelescopeEventIndexContainer",
-    "BaseTimingParametersContainer",
-    "TimingParametersContainer",
-    "SubarrayTriggerContainer",
-    "WaveformCalibrationContainer",
+    "SimulationTelescopeContainer",
     "StatisticsContainer",
-    "IntensityStatisticsContainer",
-    "PeakTimeStatisticsContainer",
-    "SchedulingBlockContainer",
-    "ObservationBlockContainer",
-    "ObservingMode",
-    "ObservationBlockState",
+    "SubarrayEventContainer",
+    "SubarrayEventIndexContainer",
+    "SubarrayTriggerContainer",
+    "TelescopeCalibrationContainer",
+    "TelescopeEventContainer",
+    "TelescopeEventIndexContainer",
+    "TelescopeMonitoringContainer",
+    "TimingParametersContainer",
+    "WaveformCalibrationContainer",
 ]
 
 
@@ -182,7 +184,7 @@ class TelescopeEventType(enum.Enum):
     UNKNOWN = 255
 
 
-class ArrayEventIndexContainer(Container):
+class SubarrayEventIndexContainer(Container):
     """index columns to include in event lists, common to all data levels"""
 
     default_prefix = ""  # don't want to prefix these
@@ -609,7 +611,7 @@ class SimulatedShowerContainer(Container):
 
 class SimulationTelescopeContainer(Container):
     """
-    True images and parameters derived from them, analgous to the `DL1CameraContainer`
+    True images and parameters derived from them, analgous to the `DL1TelescopeContainer`
     but for simulated data.
     """
 
@@ -1221,7 +1223,7 @@ class SubarrayEventContainer(Container):
     count = Field(0, description="number of events processed")
 
     index = Field(
-        default_factory=ArrayEventIndexContainer,
+        default_factory=SubarrayEventIndexContainer,
         description="event indexing information",
     )
 

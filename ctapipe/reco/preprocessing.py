@@ -75,7 +75,7 @@ def collect_features(
 
     Parameters
     ----------
-    event : ArrayEventContainer
+    event : SubarrayEventContainer
         The event container from which to collect the features
     tel_id : int
         The telscope id for which to collect the features

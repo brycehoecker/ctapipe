@@ -124,7 +124,7 @@ class MuonProcessor(TelescopeComponent):
 
         Parameters
         ----------
-        event: ArrayEventContainer
+        event: SubarrayEventContainer
             Collection of all event information
         tel_id: int
             Telescope ID of the instrument that has measured the image

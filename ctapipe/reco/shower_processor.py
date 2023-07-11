@@ -75,7 +75,7 @@ class ShowerProcessor(Component):
 
         Parameters
         ----------
-        event : ctapipe.containers.ArrayEventContainer
+        event : ctapipe.containers.SubarrayEventContainer
             Top-level container for all event information.
         """
         for reconstructor in self.reconstructors:

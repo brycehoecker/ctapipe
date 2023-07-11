@@ -12,7 +12,6 @@ from ctapipe.atmosphere import AtmosphereDensityProfile
 from ctapipe.instrument.optics import FocalLengthKind
 
 from ..containers import (
-    ArrayEventIndexContainer,
     CameraHillasParametersContainer,
     CameraTimingParametersContainer,
     ConcentrationContainer,
@@ -41,6 +40,7 @@ from ..containers import (
     SimulationSubarrayContainer,
     SimulationTelescopeContainer,
     SubarrayEventContainer,
+    SubarrayEventIndexContainer,
     SubarrayTriggerContainer,
     TelescopeEventContainer,
     TelescopeEventIndexContainer,
@@ -138,8 +138,8 @@ class HDF5EventSource(EventSource):
     specifying the file to be read.
 
     Looping over the EventSource yields events from the _generate_events
-    method. An event equals an ArrayEventContainer instance.
-    See ctapipe.containers.ArrayEventContainer for details.
+    method. An event equals an SubarrayEventContainer instance.
+    See ctapipe.containers.SubarrayEventContainer for details.
 
     Attributes
     ----------
@@ -393,7 +393,7 @@ class HDF5EventSource(EventSource):
 
     def _generator(self):
         """
-        Yield ArrayEventContainer to iterate through events.
+        Yield SubarrayEventContainer to iterate through events.
         """
         self.reader = HDF5TableReader(self.file_)
 
@@ -562,7 +562,7 @@ class HDF5EventSource(EventSource):
         # Setup iterators for the array events
         events = HDF5TableReader(self.file_).read(
             "/dl0/event/subarray/trigger",
-            [SubarrayTriggerContainer, ArrayEventIndexContainer],
+            [SubarrayTriggerContainer, SubarrayEventIndexContainer],
             ignore_columns={"tel"},
         )
         telescope_trigger_reader = HDF5TableReader(self.file_).read(

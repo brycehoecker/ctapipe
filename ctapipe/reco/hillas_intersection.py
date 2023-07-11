@@ -93,7 +93,7 @@ class HillasIntersection(HillasGeometryReconstructor):
 
         Parameters
         ----------
-        event : `~ctapipe.containers.ArrayEventContainer`
+        event : `~ctapipe.containers.SubarrayEventContainer`
             The event, needs to have dl1 parameters.
             Will be filled with the corresponding dl2 containers,
             reconstructed stereo geometry and telescope-wise impact position.

@@ -46,6 +46,7 @@ __all__ = [
     "SimulatedShowerContainer",
     "SimulatedShowerDistribution",
     "SimulationConfigContainer",
+    "SimulationSubarrayContainer",
     "SimulationTelescopeContainer",
     "StatisticsContainer",
     "SubarrayEventContainer",

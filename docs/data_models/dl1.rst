@@ -81,7 +81,7 @@ Simulation Data Model
       - :py:class:`~ctapipe.containers.SubarrayEventIndexContainer` +, :py:class:`~ctapipe.containers.SimulatedShowerContainer`
     * - ``/simulation/event/telescope/images/tel_{TEL_ID:03d}``
       - simulated camera images
-      - :py:class:`~ctapipe.containers.SubarrayEventIndexContainer` +, :py:class:`~ctapipe.containers.SimulatedCameraContainer`
+      - :py:class:`~ctapipe.containers.SubarrayEventIndexContainer` +, :py:class:`~ctapipe.containers.SimulationTelescopeContainer`
     * - ``/simulation/event/telescope/parameters/tel_{TEL_ID:03d}``
       - Parameters derived form the simulated camera images
       - :py:class:`~ctapipe.containers.SubarrayEventIndexContainer` +, :py:class:`~ctapipe.containers.ImageParametersContainer`
